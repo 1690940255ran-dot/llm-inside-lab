@@ -1,34 +1,90 @@
 # LLM 内部机制可视化实验室
 
-用可交互的方式把大语言模型的内部机制拆成直观模块。**中文界面 · 纯前端 · 零付费依赖 · 响应式**。
+**用可交互的方式，把大语言模型的黑盒拆开看。**
 
-> 目标读者：想真正"看懂"大模型在算什么，而不是只会调 API 的人。
+中文界面 · 纯前端 · 零付费依赖 · 响应式 · 六个模块全部可玩
 
-## 快速开始
+![Node](https://img.shields.io/badge/node-%E2%89%A518-339933)
+![React](https://img.shields.io/badge/react-18-61dafb)
+![TS](https://img.shields.io/badge/typescript-5-3178c6)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+---
+
+## 在线体验
+
+部署到 GitHub Pages 后，地址形如：
+
+```
+https://<你的用户名>.github.io/llm-inside-lab/
+```
+
+本地跑：
 
 ```bash
 npm install
-npm run dev      # 打开 http://127.0.0.1:5173
+npm run dev      # http://127.0.0.1:5173
 ```
 
 ```bash
-npm run build    # 产物在 dist/，可直接丢到 GitHub Pages
+npm run build    # 产物在 dist/，可直接静态托管
 ```
 
-## 已完成模块（v0.1）
+---
 
-| 模块 | 位置 | 说明 |
-| --- | --- | --- |
-| ① 分词 | `src/modules/tokenizer` | **真实的 BPE 算法**：合并表从内置语料现场学出来，带逐步合并动画、词表统计、字符级对照 |
-| ② 嵌入与位置编码 | `src/modules/embedding` | 嵌入向量热图、正弦位置编码、位置相似度矩阵、RoPE 旋转演示、PCA 降维散点 |
-| ③ 多头自注意力 | `src/modules/attention` | **主推模块**：可切层切头的注意力热力图、本层所有头一览、因果掩码、温度与距离衰减可调、逐行注意力分布 |
+## 六个模块
 
-| ④ 逐 token 生成与采样 | `src/modules/generation` | 把抽签前的每一步摊开：原始概率 → 温度 → top-k → top-p → 抽中谁；概率来自真实的 bigram 统计模型 |
-| ⑤ KV Cache 加速 | `src/modules/kvcache` | 量化「省了多少 FLOPs、付了多少显存」，含 GQA、batch、精度的影响曲线 |
+| 模块 | 你能玩到什么 |
+| --- | --- |
+| **① 分词** | 真实的 BPE 算法，合并表从语料现场学出来。可调合并次数、可换自定义语料，带逐步合并动画和字符级对照 |
+| **② 嵌入与位置编码** | 嵌入向量热图、正弦位置编码、位置相似度矩阵、RoPE 旋转演示、PCA 降维散点 |
+| **③ 多头自注意力** | **主力模块**：可切层切头的注意力热力图、本层所有头一览、因果掩码、温度与距离衰减实时可调、逐行注意力分布 |
+| **④ 逐 token 生成与采样** | 把抽签前的每一步摊开：原始 p → 温度 → top-k → top-p → 抽中谁，被截断的候选整行灰掉 |
+| **⑤ KV Cache 加速** | 量化「省了多少 FLOPs、付了多少显存」，含 GQA、batch、精度三个维度的影响曲线 |
+| **⑥ Transformer 层间数据流** | 可逐子步推进的 Block 结构动画（LN→Attn→残差→LN→FFN→残差），配表示热图、残差贡献、层间相似度 |
 
-| ⑥ Transformer 层间数据流 | `src/modules/flow` | 可逐子步推进的 Block 结构动画（LN → Attention → 残差 → FFN → 残差），配当前表示热图、残差贡献、层间相似度 |
+侧边栏顺序即建议的浏览顺序：
 
-六个模块全部可用。侧边栏顺序即建议的浏览顺序。
+```
+分词 → 嵌入与位置编码 → 多头注意力 → 采样生成 → KV Cache → 层间数据流
+```
+
+前三步是理解后面一切的地基；后三步是"训练好的模型怎么被用来生成"，也是工程面试最爱问的部分。
+
+---
+
+## 配套长文
+
+站点负责"看见"，长文负责"讲透"。每篇 1500 字左右，配公式、类比、常见误解和动手实验清单。
+
+| 文章 | 内容 |
+| --- | --- |
+| [01 · 分词](./docs/01-tokenizer.md) | 为什么不能按字切也不能按词切；BPE 到底在统计什么；**中文为什么更费 token** |
+| [02 · 嵌入与位置编码](./docs/02-embedding.md) | 自注意力为什么是排列等变的；正弦编码的频率设计；**RoPE 为什么天然表达相对距离** |
+| [03 · 多头注意力](./docs/03-attention.md) | 为什么要除以 √d_k；多头的必要性；**attention sink 是什么以及它为什么能撑起 StreamingLLM** |
+| [04 · 采样](./docs/04-sampling.md) | 温度 vs top-p 的本质区别（改 logits 还是改支撑集）；低温度为什么会复读 |
+| [05 · KV Cache](./docs/05-kvcache.md) | O(m·n²) → O(n²+m·n) 的推导；**GQA 为什么是最划算的一刀**；prefill 与 decode 是两种负载 |
+| [06 · Transformer Block](./docs/06-transformer-block.md) | pre-norm vs post-norm；残差流视角；**FFN 才是参数大头与知识存储处** |
+
+---
+
+## 关于"真实性"的诚实说明
+
+这是本项目最重要的设计取舍，写在首页上，也写在这里：
+
+- **不下载任何模型权重**，所以所有数值都是**确定性模拟**的（同一个输入永远得到同一个结果）。好处是离线、秒开、可任意交互；代价是它不是真实模型的前向结果。
+- **但算法流程是真的**：
+  - BPE 的合并表是真的从语料频次里统计出来的，不是硬编码；
+  - 注意力的 Q/K/V 投影、`/√d_k` 缩放、因果掩码、softmax 走的是完整正确的计算路径；
+  - 采样三个参数的实现与 HF `transformers` 的 logits warper 逻辑一致；
+  - KV Cache 的复杂度是解析推导，可以直接和 profiler 对照；
+  - 不同头呈现的模式（前一个 token / 句首 sink / 标点 / 内容相似 / 稀疏激发）是文献中反复观察到的典型行为。
+
+**用它建立直觉是安全的，用它引用具体数值是不行的。**
+
+后续计划提供「接入 transformers.js 跑真实小模型权重」的可选开关。
+
+---
 
 ## 目录结构
 
@@ -41,31 +97,34 @@ src/
 │   ├── embedding.ts      模拟嵌入向量、余弦相似度、PCA 降维
 │   ├── positional.ts     正弦位置编码、RoPE 角度、位置相似度
 │   ├── attention.ts      多头注意力模拟（头行为偏置 + 掩码 + 温度）
-│   ├── ngram.ts          从语料统计的 bigram 语言模型（给采样模块提供真实概率分布）
+│   ├── transformer.ts    Transformer Block 前向模拟（pre-norm + GELU FFN）
+│   ├── ngram.ts          从语料统计的 bigram 语言模型（给采样模块提供真实分布）
 │   ├── sampling.ts       温度 / top-k / top-p 采样
 │   ├── kvcache.ts        KV Cache 的计算量与显存解析模型
 │   ├── color.ts          热力图配色
 │   └── sharedModel.ts    全局共用的分词模型
 ├── components/           通用 UI：滑块、分段选择、热力图、条形图、折线图、token 卡片、原理卡
-├── modules/              各个教学模块（registry.ts 是注册表，加模块只改一处）
+├── modules/              六个教学模块（registry.ts 是注册表）
 ├── styles/global.css     全部样式，浅色主题 + 响应式
 └── App.tsx               侧边栏 + 内容区，无路由库
+docs/                     六篇配套长文
+.github/workflows/        GitHub Pages 自动部署
 ```
 
-新增模块只需两步：在 `src/modules/<name>/` 写好组件，然后在 `src/modules/registry.ts` 里加一项。
+**新增一个模块只需两步**：在 `src/modules/<name>/` 写好组件，然后在 `src/modules/registry.ts` 里加一项。
 
-## 关于"真实性"的诚实说明
+---
 
-这是本项目最重要的设计取舍，写在首页上，也写在这里：
+## 部署到 GitHub Pages
 
-- **不下载任何模型权重**，因此所有数值都是**确定性模拟**的（同一个输入永远得到同一个结果）。好处是离线、秒开、可任意交互；代价是它不是真实模型的前向结果。
-- **但算法流程是真的**：
-  - BPE 的合并表是真的从语料频次里统计出来的，不是硬编码；
-  - 注意力的 Q/K/V 投影、`/√d_k` 缩放、因果掩码、softmax 走的是完整正确的计算路径；
-  - 不同头呈现的模式（前一个 token / 句首 attention sink / 标点 / 内容相似 / 稀疏激发）是文献中反复观察到的典型行为。
-- 建议的学习路径：用本站建立直觉 → 用跑真实权重的项目（如 [transformer-explainer](https://github.com/poloclub/transformer-explainer)）验证。
+仓库里已经带好了 workflow（`.github/workflows/deploy.yml`）。步骤：
 
-后续计划提供「接入 transformers.js 跑真实小模型权重」的可选开关。
+1. 在仓库 Settings → Pages → Source 选 **GitHub Actions**
+2. 推送到 `main` 分支，workflow 会自动构建并部署
+
+`vite.config.ts` 里 `base: './'` 已设好，所以在任意子路径下都能正常加载。
+
+---
 
 ## 参考与致谢
 
@@ -80,9 +139,10 @@ src/
 
 - [x] v0.1 分词 / 位置编码 / 多头注意力
 - [x] v0.2 逐 token 生成与采样、KV Cache 加速
-- [x] v0.3 Transformer 层间数据流（残差、LayerNorm、FFN 张量形状动画）
-- [ ] v0.4 可选接入 transformers.js，跑真实小模型权重
-- [ ] v0.5 中英双语界面 + 每个模块配套的讲解长文
+- [x] v0.3 Transformer 层间数据流
+- [x] v0.4 六篇配套中文长文 + Pages 自动部署
+- [ ] v0.5 可选接入 transformers.js，跑真实小模型权重
+- [ ] v0.6 中英双语界面
 
 ## License
 
