@@ -400,6 +400,18 @@ export function mergeFragments(ids: number[], decode: (part: number[]) => string
   return out
 }
 
+/**
+ * top 候选的显示标签。
+ *
+ * ⚠️ 与分词 chips 不同：候选是孤立的单个 id，没有「相邻碎片」可以合并，
+ * 所以字节碎片在这里只能显示 #id（浏览器实测：中文 prompt 的 top 候选
+ * 逐 id 解码全是 U+FFFD，整列 `` 没法分辨是这次跑出来的真 bug）。
+ */
+export function topTokenLabel(raw: string, id: number): string {
+  if (raw === '\uFFFD') return `#${id}`
+  return prettifyLabel(raw, id)
+}
+
 /** 数值稳定的 softmax + 取前 k 个。返回的 p 是在【完整词表】上归一化后的概率。 */
 export function softmaxTop(logits: number[], k: number): { top: TopToken[]; entropy: number } {
   if (!logits.length) return { top: [], entropy: 0 }
@@ -503,7 +515,7 @@ export async function runNextToken(text: string, topK = 12): Promise<RealNextTok
 
   const { top, entropy } = softmaxTop(last, topK)
   for (const item of top) {
-    item.label = prettifyLabel(safeDecode(tokenizer, [item.id]), item.id)
+    item.label = topTokenLabel(safeDecode(tokenizer, [item.id]), item.id)
   }
 
   // present.*.key / .value 的形状就是真实 KV cache 占用

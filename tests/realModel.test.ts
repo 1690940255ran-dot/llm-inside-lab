@@ -13,6 +13,7 @@ import {
   pickDevice,
   isNodeRuntime,
   mergeFragments,
+  topTokenLabel,
 } from '../src/core/realModel'
 
 /**
@@ -265,6 +266,22 @@ describe('explainError（把库的原始报错翻译成能指导操作的话）'
   it('非 Error 对象不会炸', () => {
     expect(typeof explainError('plain string')).toBe('string')
     expect(typeof explainError(null)).toBe('string')
+  })
+})
+
+describe('topTokenLabel（回归：中文 prompt 的 top 候选整列 `` 没法分辨）', () => {
+  it('字节碎片候选显示 #id，而不是千篇一律的 ``', () => {
+    expect(topTokenLabel('\uFFFD', 123456)).toBe('#123456')
+    expect(topTokenLabel('\uFFFD', 789)).toBe('#789')
+  })
+
+  it('正常候选原样显示', () => {
+    expect(topTokenLabel(' token', 1)).toBe(' token')
+    expect(topTokenLabel('的', 2)).toBe('的')
+  })
+
+  it('空白候选仍走可见记号', () => {
+    expect(topTokenLabel(' ', 3)).toBe('␣')
   })
 })
 
