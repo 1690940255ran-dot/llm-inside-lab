@@ -83,14 +83,16 @@ npm run build    # 产物在 dist/，可直接静态托管
 在浏览器里（WebGPU 优先，回退 WASM）跑一个小模型，把页面上的温度 / top-k / top-p 三个旋钮
 直接作用在真实 logits 上——采样那套代码（`core/sampling.ts`，有单测）跑的是真模型的分布。
 
-| 模型                                       | 实测体积   | dtype  | 说明                                    |
-| ---------------------------------------- | ------ | ------ | ------------------------------------- |
-| `onnx-community/SmolLM2-135M-Instruct-ONNX` | 129 MB | `q8`   | 30 层 × 9 头，体积最小，推荐先用它                  |
-| `Xenova/gpt2`                            | 268 MB | `int8` | 12 层 × 12 头。中文按 UTF-8 字节切分，会看到大量 `` 碎片 |
-| `onnx-community/Qwen2.5-0.5B-Instruct`   | 488 MB | `q8`   | 24 层 × 14 头，**唯一真正支持中文的选项**            |
+| 模型                                       | 实测体积   | dtype  | 说明                                                |
+| ---------------------------------------- | ------ | ------ | ------------------------------------------------- |
+| `onnx-community/SmolLM2-135M-Instruct-ONNX` | 129 MB | `q8`   | 2024 · 30 层 × 9 头，体积最小，推荐先用它                        |
+| `onnx-community/LFM2-350M-ONNX`          | 280 MB | `q4`   | 2025 · Liquid AI 混合卷积+门控注意力，16 块 —— 注意力不是唯一出路的活例子 |
+| `onnx-community/Qwen3-0.6B-ONNX`         | 589 MB | `q8`   | 2025 · 28 层 × 16Q/8KV 头（GQA），**唯一真正支持中文的选项**           |
+| `Xenova/gpt2`                            | 268 MB | `int8` | 2019 经典对照：中文按 UTF-8 字节切分（12 字 → 23 token），与现代模型对比看 BPE 进步 |
 
-体积是 `curl -I` 实测的 `content-length`，不是估算。`dtype` 必须和仓库里实际存在的文件名对得上，
-否则会 404 —— 详见下面「三个踩过的坑」。
+体积全部是 API `blobs=true` 实测（LFM2 为 `.onnx` 壳 + `.onnx_data` 权重的外部数据格式，
+transformers.js 会自动跟随下载）。`dtype` 必须和仓库里实际存在的文件名对得上，否则会 404 ——
+详见下面「四个踩过的坑」。主力选型全部是 2024-2025 年的模型；GPT-2 只作为教学对照保留。
 
 要点：
 
@@ -132,7 +134,8 @@ $ npm run probe:model -- Xenova/gpt2 int8
 | 覆盖 `env.remotePathTemplate` 加 `onnx/` 前缀                                     | `Cannot read properties of undefined (reading 'tokenizer_class')` | 只改 `env.remoteHost`。模板对**所有**文件生效，根目录的配置文件会 404 |
 | `dtype: 'q8'` 配 `Xenova/gpt2`                                                | `Could not locate file: .../onnx/model_quantized.onnx`         | 老仓库只有 `model_int8.onnx`，改用 `dtype: 'int8'`   |
 | 用 `tokenize()` + `tokens.unshift('<s>')` 对齐标签                                | 无 BOS 的模型（Qwen2.5）标签整体错位一行；中文全是 `æ³¨æĦıåĬĽ` 乱码                  | 逐 id `tokenizer.decode([id])`，从源头保证长度一致且可读  |
-| hf-mirror 防盗链（curl 通、浏览器挂）                                            | 同一 URL：不带 Referer 返回 307 + CORS 头；带第三方 Referer 后 CORS 头被剥掉，浏览器 fetch 必被拦截。transformers.js v4 又把探测失败静默吞掉（`get_file_metadata` 返回 `exists: false`），最终才报出那个迷惑性的 `tokenizer_class` | 这不是代码能修的：镜像站行为如此。失败提示里写明原因，并提示**刷新页面**后重试 —— 因为探测结果在页面会话内被 memoize，原地点「重新加载」一个请求都不会发 |
+| hf-mirror 防盗链（curl 通、浏览器挂）                                            | 同一 URL：不带 Referer 返回 307 + CORS 头；带第三方 Referer 后 CORS 头被剥掉，浏览器 fetch 必被拦截。transformers.js v4 又把探测失败静默吞掉（`get_file_metadata` 返回 `exists: false`），最终才报出那个迷惑性的 `tokenizer_class` | 镜像站行为改不了，但可以在 fetch 层兜底：`installRetryingFetch()` 对连接失败自动重试（memoize 缓存的是探测结果，只要 fetch 层重试到成功就不会缓存失败）；失败提示写明原因并提示**刷新页面**重试 —— 探测结果在页面会话内被 memoize，原地点「重新加载」一个请求都不会发 |
+| 本机环境：系统代理开着但代理软件没在运行                                         | Windows 系统代理 `127.0.0.1:10809` 类端口开启但代理进程没跑 —— Chrome 走死代理全部 `Failed to fetch`，curl 不读系统代理直连正常，精确复刻「命令行通、浏览器挂」。排查：设置 → 网络和 Internet → 代理 | 关掉系统代理或把代理软件跑起来。代码层无法绕过用户环境，但 `explainError` 会把它列为第一嫌疑 |
 
 第三条的对比很直观：
 

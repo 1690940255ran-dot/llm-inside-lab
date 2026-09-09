@@ -14,6 +14,7 @@ import {
   isNodeRuntime,
   mergeFragments,
   topTokenLabel,
+  installRetryingFetch,
 } from '../src/core/realModel'
 
 /**
@@ -252,10 +253,10 @@ describe('explainError（把库的原始报错翻译成能指导操作的话）'
     expect(msg).toContain('model_quantized.onnx')
   })
 
-  it('网络类报错提到 Referer 防盗链与刷新重试', () => {
+  it('网络类报错给出系统代理 / Referer / 刷新三层排查', () => {
     const msg = explainError(new Error('Failed to fetch'))
+    expect(msg).toContain('系统代理')
     expect(msg).toContain('Referer')
-    expect(msg).toContain('镜像')
     expect(msg).toContain('刷新页面')
   })
 
@@ -282,6 +283,55 @@ describe('topTokenLabel（回归：中文 prompt 的 top 候选整列 `` 没法�
 
   it('空白候选仍走可见记号', () => {
     expect(topTokenLabel(' ', 3)).toBe('␣')
+  })
+})
+
+describe('installRetryingFetch（回归：一次网络抖动 = memoize 缓存 exists:false = 会话永久失败）', () => {
+  const withFakeFetch = async (impl: (call: number) => Promise<Response>) => {
+    let calls = 0
+    const orig = globalThis.fetch
+    ;(globalThis as any).__hfRetryingFetchInstalled = false
+    ;(globalThis as any).fetch = async (input: any, init?: any) => impl(++calls).then((r) => {
+      // 模拟 transformers.js 只等 headers；signal 透传检查
+      return r
+    })
+    return { get calls() { return calls }, restore: () => { (globalThis as any).fetch = orig } }
+  }
+
+  it('前两次失败第三次成功 → 返回成功且共调 3 次', async () => {
+    const fake = await withFakeFetch((n) =>
+      n < 3 ? Promise.reject(new TypeError('Failed to fetch')) : Promise.resolve(new Response('ok')),
+    )
+    installRetryingFetch(3, 500)
+    const res = await globalThis.fetch('https://hf-mirror.com/x')
+    expect(await res.text()).toBe('ok')
+    expect(fake.calls).toBe(3)
+    fake.restore()
+  })
+
+  it('全部失败时抛出最后一次的错误', async () => {
+    const fake = await withFakeFetch(() => Promise.reject(new TypeError('down')))
+    installRetryingFetch(2, 300)
+    await expect(globalThis.fetch('https://hf-mirror.com/x')).rejects.toThrow('down')
+    expect(fake.calls).toBe(2)
+    fake.restore()
+  })
+
+  it('首次成功不重试', async () => {
+    const fake = await withFakeFetch(() => Promise.resolve(new Response('ok')))
+    installRetryingFetch(3, 500)
+    await globalThis.fetch('https://hf-mirror.com/x')
+    expect(fake.calls).toBe(1)
+    fake.restore()
+  })
+
+  it('重复安装是幂等的', async () => {
+    const fake = await withFakeFetch(() => Promise.resolve(new Response('ok')))
+    installRetryingFetch(3, 500)
+    const before = (globalThis as any).fetch
+    installRetryingFetch(3, 500)
+    expect((globalThis as any).fetch).toBe(before)
+    fake.restore()
   })
 })
 

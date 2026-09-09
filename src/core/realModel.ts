@@ -51,26 +51,35 @@ export const REAL_MODELS: RealModelSpec[] = [
     label: 'SmolLM2-135M · 30 层 × 9 头',
     labelEn: 'SmolLM2-135M · 30 layers × 9 heads',
     size: '129 MB',
-    note: '体积最小，英文效果最好，推荐先用它',
-    noteEn: 'Smallest download, best English quality — start here',
+    note: '2024 · 体积最小，加载最快，推荐先用它',
+    noteEn: '2024 · smallest download, fastest to start — begin here',
+  },
+  {
+    id: 'onnx-community/LFM2-350M-ONNX',
+    dtype: 'q4',
+    label: 'LFM2-350M · 16 块混合卷积+门控注意力',
+    labelEn: 'LFM2-350M · 16 hybrid conv + gated-attention blocks',
+    size: '280 MB',
+    note: '2025 新架构（Liquid AI）：不用标准自注意力做主计算，是「注意力不是唯一出路」的活例子',
+    noteEn: '2025 architecture (Liquid AI): standard self-attention is not the main compute — living proof attention is not the only way',
+  },
+  {
+    id: 'onnx-community/Qwen3-0.6B-ONNX',
+    dtype: 'q8',
+    label: 'Qwen3-0.6B · 28 层 × 16Q/8KV 头 · 中文',
+    labelEn: 'Qwen3-0.6B · 28 layers × 16Q/8KV heads · Chinese',
+    size: '589 MB',
+    note: '2025 · 唯一真正支持中文的选项；16 个 Query 头共享 8 个 KV 头，GQA 的现成教材',
+    noteEn: '2025 · the only option that truly handles Chinese; 16 query heads share 8 KV heads — GQA on display',
   },
   {
     id: 'Xenova/gpt2',
     dtype: 'int8',
-    label: 'GPT-2 (124M) · 12 层 × 12 头',
-    labelEn: 'GPT-2 (124M) · 12 layers × 12 heads',
+    label: 'GPT-2 (124M) · 12 层 × 12 头 · 2019 经典对照',
+    labelEn: 'GPT-2 (124M) · 12 layers × 12 heads · 2019 classic',
     size: '268 MB',
-    note: '经典之作。中文按 UTF-8 字节切分，会看到大量 � 碎片 —— 这是真实行为',
-    noteEn: 'The classic. It splits Chinese into UTF-8 bytes, so you will see � fragments — that is genuine behaviour',
-  },
-  {
-    id: 'onnx-community/Qwen2.5-0.5B-Instruct',
-    dtype: 'q8',
-    label: 'Qwen2.5-0.5B · 24 层 × 14 头 · 中文',
-    labelEn: 'Qwen2.5-0.5B · 24 layers × 14 heads · Chinese',
-    size: '488 MB',
-    note: '唯一真正支持中文的选项，但下载量最大',
-    noteEn: 'The only option that truly handles Chinese, but the largest download',
+    note: '留在列表里是为了对照：它把中文按 UTF-8 字节切分（12 个字 → 23 个 token），而上面的现代模型只要几个 —— 一眼看出 BPE 词表的进步',
+    noteEn: 'Kept for contrast: it splits Chinese into UTF-8 bytes (12 chars → 23 tokens) while the modern models above need a handful — BPE progress at a glance',
   },
 ]
 
@@ -203,6 +212,42 @@ export function specOf(modelId: string): RealModelSpec | undefined {
   return REAL_MODELS.find((m) => m.id === modelId)
 }
 
+/**
+ * 给全局 fetch 装一层「网络错误自动重试」。
+ *
+ * 为什么必须在这一层修：transformers.js 对元数据探测（get_file_metadata）失败会静默吞掉
+ * 并把 exists:false memoize 进模块实例（浏览器实测复现：控制台
+ * "Unable to fetch file metadata ... Failed to fetch" → tokenizer_class 报错，
+ * 且之后点多少次重新加载都不发请求）。hf-mirror 偶发掐断连接（curl 实测多次 code=000），
+ * 一次抖动 = 本次会话永久失败。在 fetch 层透明重试到成功，memoize 就永远不会缓存失败结果。
+ *
+ * 只重试「建立连接阶段」的失败；调用方主动 abort 不重试；响应体流式传输中途失败不归它管。
+ */
+export function installRetryingFetch(attempts = 3, timeoutMs = 20_000): void {
+  const g = globalThis as any
+  if (g.__hfRetryingFetchInstalled) return
+  const orig = g.fetch.bind(g)
+  g.fetch = async (input: any, init?: any) => {
+    let lastErr: unknown
+    for (let i = 0; i < attempts; i++) {
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+      try {
+        // 调用方自己给了 signal 就尊重它，不加超时
+        return await orig(input, init?.signal ? init : { ...init, signal: ctrl.signal })
+      } catch (e) {
+        lastErr = e
+        if (init?.signal?.aborted) throw e
+        await new Promise((r) => setTimeout(r, 600 * (i + 1)))
+      } finally {
+        clearTimeout(timer)
+      }
+    }
+    throw lastErr
+  }
+  g.__hfRetryingFetchInstalled = true
+}
+
 export async function load(
   modelId: string,
   mirrorHost: string,
@@ -222,6 +267,9 @@ export async function load(
     }
     tf.env.allowRemoteModels = true
     tf.env.allowLocalModels = false
+
+    // 网络抖动重试：必须在 from_pretrained 之前装好（见函数注释）
+    installRetryingFetch()
 
     // 静态托管（GitHub Pages）拿不到 SharedArrayBuffer，必须锁单线程，否则多线程 WASM 会挂
     const wasmCfg = tf.env?.backends?.onnx?.wasm
@@ -271,7 +319,7 @@ export function explainError(e: any): string {
     return `仓库里没有这个权重文件${m ? `（${m[1]}）` : ''}，说明 dtype 和仓库实际文件名对不上。`
   }
   if (/Failed to fetch|NetworkError|CORS|ERR_|timeout/i.test(msg)) {
-    return `网络请求失败（${msg}）。hf-mirror 对带第三方 Referer 的浏览器请求会剥掉 CORS 头，这是它防盗链的行为；页面会话内探测结果被缓存，【刷新页面】后再重试，或换一个镜像地址。`
+    return `网络请求失败（${msg}）。按可能性排查：① Windows 系统代理开着但代理软件没在运行（设置 → 网络 → 代理，实测本机常见 127.0.0.1:10809 类端口）——Chrome 会走死代理而 curl 直连，表现为"命令行通、浏览器挂"；② hf-mirror 对带第三方 Referer 的浏览器请求会剥掉 CORS 头（防盗链）；③ 页面会话内探测结果被缓存，【刷新页面】后再重试或换镜像地址。`
   }
   return msg
 }
