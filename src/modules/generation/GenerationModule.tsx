@@ -10,6 +10,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Card, Slider, Stats } from '../../components/Controls'
 import { Principle } from '../../components/Principle'
+import { RealModelPanel } from '../../components/RealModelPanel'
 import { TokenChips } from '../../components/Tokens'
 import { DEFAULT_CORPUS } from '../../core/corpus'
 import { encode } from '../../core/bpe'
@@ -387,6 +388,12 @@ top-p:   accumulate from the top and keep the fewest candidates exceeding p
           </button>
         </div>
       </Card>
+
+      {/*
+        真实模型面板：上面那张表用的是 bigram，这里用真实权重算的 logits，
+        但两边共用同一套采样参数 —— 于是可以直接对比"同样的旋钮在真假分布上的效果"。
+      */}
+      <RealModelPanel text={prompt + generated.map((g) => g.text).join('')} cfg={cfg} seed={seed} />
 
       <Card title={c.output} hint={c.outputHint}>
         <div style={{ marginBottom: 10 }}>

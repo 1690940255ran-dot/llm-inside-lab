@@ -5,14 +5,10 @@
 中文界面（可切 English） · 纯前端 · 零付费依赖 · 响应式 · 六个模块全部可玩 · 可选加载真实模型权重
 
 ![Node](https://img.shields.io/badge/node-%E2%89%A518-339933)
-
 ![React](https://img.shields.io/badge/react-18-61dafb)
-
 ![TS](https://img.shields.io/badge/typescript-5-3178c6)
+![tests](https://img.shields.io/badge/tests-93%20passing-brightgreen)
 ![i18n](https://img.shields.io/badge/i18n-%E4%B8%AD%2FEN-blue)
-
-
-
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -45,7 +41,7 @@ npm run build    # 产物在 dist/，可直接静态托管
 | **① 分词**                | 真实的 BPE 算法，合并表从语料现场学出来。可调合并次数、可换自定义语料，带逐步合并动画和字符级对照       |
 | **② 嵌入与位置编码**           | 嵌入向量热图、正弦位置编码、位置相似度矩阵、RoPE 旋转演示、PCA 降维散点                  |
 | **③ 多头自注意力**            | **主力模块**：可切层切头的注意力热力图、本层所有头一览、因果掩码、温度与距离衰减实时可调、逐行注意力分布    |
-| **④ 逐 token 生成与采样**     | 把抽签前的每一步摊开：原始 p → 温度 → top-k → top-p → 抽中谁，被截断的候选整行灰掉     |
+| **④ 逐 token 生成与采样**     | 把抽签前的每一步摊开：原始 p → 温度 → top-k → top-p → 抽中谁，被截断的候选整行灰掉。**可选加载真实模型**，让同样的旋钮作用在真实 logits 上 |
 | **⑤ KV Cache 加速**       | 量化「省了多少 FLOPs、付了多少显存」，含 GQA、batch、精度三个维度的影响曲线             |
 | **⑥ Transformer 层间数据流** | 可逐子步推进的 Block 结构动画（LN→Attn→残差→LN→FFN→残差），配表示热图、残差贡献、层间相似度 |
 
@@ -83,21 +79,86 @@ npm run build    # 产物在 dist/，可直接静态托管
 
 ## 可选：加载真实模型权重
 
-注意力模块可以切换成**真实权重**。用 [@huggingface/transformers](https://github.com/huggingface/transformers.js)
-在浏览器里（WebGPU 优先，回退 WASM）跑一个小模型，取出 `output_attentions`：
+**采样模块**可以切换成**真实权重**。用 [@huggingface/transformers](https://github.com/huggingface/transformers.js)
+在浏览器里（WebGPU 优先，回退 WASM）跑一个小模型，把页面上的温度 / top-k / top-p 三个旋钮
+直接作用在真实 logits 上——采样那套代码（`core/sampling.ts`，有单测）跑的是真模型的分布。
 
-| 模型 | 规模 | 说明 |
-| --- | --- | --- |
-| `Xenova/gpt2` | ≈ 90 MB | 12 层 × 12 头，英文，加载最快 |
-| `onnx-community/SmolLM2-135M-Instruct` | ≈ 100 MB | 30 层 × 9 头 |
-| `onnx-community/Qwen2.5-0.5B-Instruct` | ≈ 350 MB | 24 层 × 14 头，**支持中文** |
+| 模型                                       | 实测体积   | dtype  | 说明                                    |
+| ---------------------------------------- | ------ | ------ | ------------------------------------- |
+| `onnx-community/SmolLM2-135M-Instruct-ONNX` | 129 MB | `q8`   | 30 层 × 9 头，体积最小，推荐先用它                  |
+| `Xenova/gpt2`                            | 268 MB | `int8` | 12 层 × 12 头。中文按 UTF-8 字节切分，会看到大量 `` 碎片 |
+| `onnx-community/Qwen2.5-0.5B-Instruct`   | 488 MB | `q8`   | 24 层 × 14 头，**唯一真正支持中文的选项**            |
+
+体积是 `curl -I` 实测的 `content-length`，不是估算。`dtype` 必须和仓库里实际存在的文件名对得上，
+否则会 404 —— 详见下面「三个踩过的坑」。
 
 要点：
 
-- **动态 import**，不加载就不会下载这部分代码（主包 92 kB gzip，transformers 单独分片）
+- **动态 import**，不加载就不会下载这部分代码（主包 96 kB gzip，transformers 单独分片）
 - **全程本地推理**，文本不会发到任何服务器
-- **镜像可配**：默认 `https://hf-mirror.com`，国外网络可改回 `https://huggingface.co`
-- 真实模式下层数 / 头数 / 温度由模型本身决定（锁定），因果掩码仍可切换（只影响显示）
+- **镜像可配**：默认 `https://hf-mirror.com`，国外网络可改回 `https://huggingface.co`。
+  注意 hf-mirror 的防盗链：浏览器页面带第三方 Referer 时 CORS 头会被剥掉，**加载失败就刷新页面再试**（探测结果在页面会话内被缓存，原地重试无效）
+- **静态托管自动锁单线程**：GitHub Pages 不发 COOP/COEP 响应头 → 拿不到 `SharedArrayBuffer`
+  → 多线程 WASM 不可用。代码里显式探测并降级为单线程，最坏结果是"慢"而不是"崩"
+
+### ⚠️ 为什么没有「真实注意力热力图」
+
+这是实测结论，不是没做。decoder-only 模型的 ONNX 导出**根本没有注意力输出节点**：
+
+```bash
+$ npm run probe:model -- Xenova/gpt2 int8
+
+[session] model
+  outputNames: logits  (+24 present.*)
+  HAS ATTENTION OUTPUT? NO
+[forward] out.attentions = undefined
+```
+
+注意力概率矩阵在计算图内部就被融合掉了，而 `transformers.js` 的 `getAttentions()` 只识别
+`cross_/encoder_/decoder_attentions.*`（whisper 那类 seq2seq 的用法），对 CausalLM 传
+`output_attentions: true` 是空操作。
+
+所以真实权重用在**它确实能覆盖的地方**：
+
+1. **下一个 token 的真实概率分布**（`logits` 拿得到）
+2. **KV Cache 的实测张量形状**（`present.*.key/.value` 的 `dims` 拿得到，包括 GQA 下 KV 头数少于 Query 头数）
+
+注意力模块保持确定性模拟，并在界面上贴出上面这段实测输出。想自己复现，跑 `npm run probe:model` 即可。
+
+### 四个踩过的坑（都已写成回归测试）
+
+| 坑                                                                            | 现象                                                             | 修法                                          |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------- |
+| 覆盖 `env.remotePathTemplate` 加 `onnx/` 前缀                                     | `Cannot read properties of undefined (reading 'tokenizer_class')` | 只改 `env.remoteHost`。模板对**所有**文件生效，根目录的配置文件会 404 |
+| `dtype: 'q8'` 配 `Xenova/gpt2`                                                | `Could not locate file: .../onnx/model_quantized.onnx`         | 老仓库只有 `model_int8.onnx`，改用 `dtype: 'int8'`   |
+| 用 `tokenize()` + `tokens.unshift('<s>')` 对齐标签                                | 无 BOS 的模型（Qwen2.5）标签整体错位一行；中文全是 `æ³¨æĦıåĬĽ` 乱码                  | 逐 id `tokenizer.decode([id])`，从源头保证长度一致且可读  |
+| hf-mirror 防盗链（curl 通、浏览器挂）                                            | 同一 URL：不带 Referer 返回 307 + CORS 头；带第三方 Referer 后 CORS 头被剥掉，浏览器 fetch 必被拦截。transformers.js v4 又把探测失败静默吞掉（`get_file_metadata` 返回 `exists: false`），最终才报出那个迷惑性的 `tokenizer_class` | 这不是代码能修的：镜像站行为如此。失败提示里写明原因，并提示**刷新页面**后重试 —— 因为探测结果在页面会话内被 memoize，原地点「重新加载」一个请求都不会发 |
+
+第三条的对比很直观：
+
+```
+tokenize()      = "æ³¨æĦıåĬĽ" "æľºåĪ¶" "æĺ¯" ...
+per-id decode   = "注意力" "机制" "是" "大" "模型" "的核心"
+```
+
+字节级 BPE 还有个后续问题：「注」会被切成 3 个 UTF-8 字节 token，逐 id 解码每个都是 ``。
+本站的处理是把**连续的碎片合并起来整体解码**（`core/realModel.ts` 的 `mergeFragments`），
+拼回去就能解出「注」；真的解不回来的坏字节（比如半个字符）才原样保留碎片，不伪造可读文本。
+
+## 测试
+
+```bash
+npm test              # 86 个单测，全部纯函数，不碰网络
+npm run test:watch    # 开发时用
+
+# 端到端（会真的下 129 MB 权重，默认跳过）
+REAL_MODEL_TEST=1 npm test
+REAL_MODEL_TEST=1 REAL_MODEL_ID=onnx-community/Qwen2.5-0.5B-Instruct npm test
+```
+
+`core/` 全部是纯函数，所以能脱离浏览器直接断言：BPE 的无损性与可复现性、采样三个参数的
+数学性质（温度不改排序、top-p 取最小跨阈候选集、低温退化为贪心）、真实模型的标签对齐与
+数值稳定性。上面那张「三个坑」表里的每一条都有对应的回归测试。
 
 ## 关于"真实性"的诚实说明
 
@@ -132,14 +193,19 @@ src/
 │   ├── ngram.ts          从语料统计的 bigram 语言模型（给采样模块提供真实分布）
 │   ├── sampling.ts       温度 / top-k / top-p 采样
 │   ├── kvcache.ts        KV Cache 的计算量与显存解析模型
-│   ├── realModel.ts      可选：浏览器内跑真实 ONNX 模型取真实注意力
+│   ├── realModel.ts      可选：浏览器内跑真实 ONNX 模型（真实 logits + KV 形状）
 │   ├── color.ts          热力图配色
 │   └── sharedModel.ts    全局共用的分词模型
 ├── components/           通用 UI：滑块、分段选择、热力图、条形图、折线图、token 卡片、原理卡
+│   └── RealModelPanel.tsx  真实模型面板（模型选择 / 镜像 / 真实分布表 / KV 实测）
 ├── modules/              六个教学模块（registry.ts 是注册表）
 ├── i18n/                 极简双语：Context + t()，common.ts 放跨模块文案
 ├── styles/global.css     全部样式，浅色主题 + 响应式
 └── App.tsx               侧边栏 + 内容区，无路由库
+tests/                    vitest 单测 + 可选的端到端集成测试
+scripts/
+├── probe-attentions.mjs  探测 ONNX 输出签名（就是它证明了拿不到真实注意力）
+└── probe-tokenizers.mjs  对比三个模型的分词与逐 id 解码结果
 docs/                     六篇配套长文
 .github/workflows/        GitHub Pages 自动部署
 ```
@@ -176,7 +242,10 @@ docs/                     六篇配套长文
 - [x] v0.4 六篇配套中文长文 + Pages 自动部署
 - [x] v0.5 可选接入 transformers.js，浏览器内跑真实小模型权重
 - [x] v0.6 中英双语界面
+- [x] v0.6.1 `core/` 单测（86 个）+ 真实模型端到端集成测试；修掉镜像路径、dtype、token 对齐三个 bug；
+      真实权重从"注意力"改挂到"采样 + KV Cache"（因为 ONNX 拿不到注意力，有实测证据）
 - [ ] v0.7 首页 GIF 动图 + 每模块「导出图片」按钮
+- [ ] v0.7 docs/ 六篇长文的英文版（目前只有中文，英文界面下暂无对应长文）
 - [ ] v0.8 采样模块也接真实模型（真实 next-token 分布）
 
 ## License

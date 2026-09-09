@@ -1,13 +1,17 @@
 {
   "name": "llm-inside-lab",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.6.0",
   "type": "module",
   "description": "LLM 内部机制可视化交互实验室 —— 纯前端、中文、可交互地拆解大模型原理",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "probe:model": "node scripts/probe-attentions.mjs",
+    "probe:tokenizer": "node scripts/probe-tokenizers.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.2.0",
@@ -19,6 +23,7 @@
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
     "typescript": "^5.6.3",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "vitest": "^3.2.7"
   }
 }

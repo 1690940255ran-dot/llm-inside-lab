@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- hf-mirror 的防盗链会剥掉带第三方 Referer 请求的 CORS 头，导致浏览器加载真实模型必挂 -->
+    <meta name="referrer" content="no-referrer" />
     <title>LLM 内部机制可视化实验室</title>
     <meta name="description" content="用可交互的方式拆解大语言模型内部机制：分词、位置编码、多头注意力、采样生成、KV Cache。" />
   </head>

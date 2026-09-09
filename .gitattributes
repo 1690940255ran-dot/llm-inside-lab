@@ -1,0 +1,14 @@
+# 统一行尾符：仓库里一律存 LF，检出时交给各平台自己处理。
+# 不加这个，Windows 上编辑过的文件会被 git 报成「已修改」但 diff 为空。
+* text=auto eol=lf
+
+# 二进制文件不要做任何转换
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.onnx binary
+*.wasm binary

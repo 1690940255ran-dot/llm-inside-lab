@@ -17,7 +17,7 @@ export const COMMON = {
     homeLead:
       '纯前端、中英双语、零付费依赖。每个模块都可以输入你自己的文本实时渲染，并配了「公式在算什么」和「一句话类比」。',
     homeHonestTitle: '先说清楚一件事',
-    homeHonest1a: '本站不下载任何模型权重，默认所有数值都是',
+    homeHonest1a: '本站默认不下载任何模型权重，所有数值都是',
     homeHonest1b: '确定性模拟',
     homeHonest1c: '出来的：同一个输入永远得到同一个结果。这么做是为了让它能离线、秒开、可交互；代价是它',
     homeHonest1d: '不是真实模型的前向结果',
@@ -47,12 +47,12 @@ export const COMMON = {
     planBadge: '规划中',
     enterText: '请输入文本。',
 
-    realSection: '真实模型（可选）',
+    realSection: '真实模型：真实的下一个 token 分布（可选）',
     realIntro:
-      '默认展示的是确定性模拟结果。点下面的按钮可以在浏览器里真正跑一个小模型，看到真实权重算出来的注意力。首次需要下载约 100 MB 权重。',
+      '上面的分布来自内置语料统计出来的 bigram。点下面的按钮可以在浏览器里真正跑一个小模型，把上面那三个旋钮（温度 / top-k / top-p）直接作用在真实权重算出的 logits 上。首次需要下载 129 MB 起的权重，之后走浏览器缓存。',
     loadModel: '加载真实模型',
     loading: '加载中',
-    unload: '切回模拟模式',
+    unload: '卸载模型',
     realReady: '真实模型已就绪',
     realFailed: '加载失败',
     realNote:
@@ -71,7 +71,7 @@ export const COMMON = {
     homeLead:
       'Frontend-only, bilingual, no paid APIs. Every module renders live from your own text, and each comes with what the formula means and a one-sentence analogy.',
     homeHonestTitle: 'One thing up front',
-    homeHonest1a: 'This site ships no model weights. By default every number is a ',
+    homeHonest1a: 'This site ships no model weights, and by default every number is a ',
     homeHonest1b: 'deterministic simulation',
     homeHonest1c:
       ': the same input always gives the same output. That buys offline, instant, fully interactive pages — at the cost of ',
@@ -80,7 +80,7 @@ export const COMMON = {
     homeHonest2a: 'But only the learned weight matrices are simulated — ',
     homeHonest2b: 'the algorithms are real',
     homeHonest2c:
-      ': BPE merges are counted from a real corpus, attention runs the full Q/K/V projection, scaling, causal masking and softmax, and the head patterns are the ones repeatedly reported in the literature. Build intuition here, then verify against a real-weight project.',
+      ': BPE merges are counted from a real corpus, attention runs the full Q/K/V projection, scaling, causal masking and softmax, and the head patterns are the ones repeatedly reported in the literature. On top of that, the sampling module can optionally load a real small model (129 MB and up), so temperature / top-k / top-p act on a distribution produced by real weights — and you get the measured KV-cache tensor shapes for free.',
     homeOrderTitle: 'Suggested order',
     homeOrder:
       'Tokenizer → Embeddings & Positional Encoding → Multi-Head Attention → Sampling → KV Cache → Block data flow. The first three are the foundation; the last three cover how a trained model is actually used to generate, which is what engineering interviews love to ask.',
@@ -102,12 +102,12 @@ export const COMMON = {
     planBadge: 'planned',
     enterText: 'Please enter some text.',
 
-    realSection: 'Real model (optional)',
+    realSection: 'Real model: the actual next-token distribution (optional)',
     realIntro:
-      'By default you are looking at a deterministic simulation. Press the button to actually run a small model in your browser and see attention from real weights. First load downloads about 100 MB.',
+      'The distribution above comes from a bigram counted off the bundled corpus. Press the button to genuinely run a small model in your browser, so the three knobs above (temperature / top-k / top-p) act on logits produced by real weights. The first load downloads 129 MB or more, then it is browser-cached.',
     loadModel: 'Load real model',
     loading: 'Loading',
-    unload: 'Back to simulation',
+    unload: 'Unload model',
     realReady: 'Real model ready',
     realFailed: 'Load failed',
     realNote:

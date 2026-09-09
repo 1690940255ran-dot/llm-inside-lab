@@ -56,9 +56,9 @@ export const MODULES: ModuleMeta[] = [
     subEn: 'what the model looks at',
     status: 'done',
     Component: AttentionModule,
-    blurb: '主力模块：可切层切头的注意力热力图，所有头一览，可选加载真实模型权重。',
+    blurb: '主力模块：可切层切头的注意力热力图，本层所有头一览，因果掩码与温度实时可调。',
     blurbEn:
-      'Flagship module: per-layer / per-head attention heatmaps, all-heads overview, optional real model weights.',
+      'Flagship module: per-layer / per-head attention heatmaps, all-heads overview, live causal-mask and temperature controls.',
   },
   {
     id: 'generation',
