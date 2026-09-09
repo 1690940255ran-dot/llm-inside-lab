@@ -2,11 +2,17 @@
 
 **用可交互的方式，把大语言模型的黑盒拆开看。**
 
-中文界面 · 纯前端 · 零付费依赖 · 响应式 · 六个模块全部可玩
+中文界面（可切 English） · 纯前端 · 零付费依赖 · 响应式 · 六个模块全部可玩 · 可选加载真实模型权重
 
 ![Node](https://img.shields.io/badge/node-%E2%89%A518-339933)
+
 ![React](https://img.shields.io/badge/react-18-61dafb)
+
 ![TS](https://img.shields.io/badge/typescript-5-3178c6)
+![i18n](https://img.shields.io/badge/i18n-%E4%B8%AD%2FEN-blue)
+
+
+
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -34,13 +40,13 @@ npm run build    # 产物在 dist/，可直接静态托管
 
 ## 六个模块
 
-| 模块 | 你能玩到什么 |
-| --- | --- |
-| **① 分词** | 真实的 BPE 算法，合并表从语料现场学出来。可调合并次数、可换自定义语料，带逐步合并动画和字符级对照 |
-| **② 嵌入与位置编码** | 嵌入向量热图、正弦位置编码、位置相似度矩阵、RoPE 旋转演示、PCA 降维散点 |
-| **③ 多头自注意力** | **主力模块**：可切层切头的注意力热力图、本层所有头一览、因果掩码、温度与距离衰减实时可调、逐行注意力分布 |
-| **④ 逐 token 生成与采样** | 把抽签前的每一步摊开：原始 p → 温度 → top-k → top-p → 抽中谁，被截断的候选整行灰掉 |
-| **⑤ KV Cache 加速** | 量化「省了多少 FLOPs、付了多少显存」，含 GQA、batch、精度三个维度的影响曲线 |
+| 模块                      | 你能玩到什么                                                    |
+| ----------------------- | --------------------------------------------------------- |
+| **① 分词**                | 真实的 BPE 算法，合并表从语料现场学出来。可调合并次数、可换自定义语料，带逐步合并动画和字符级对照       |
+| **② 嵌入与位置编码**           | 嵌入向量热图、正弦位置编码、位置相似度矩阵、RoPE 旋转演示、PCA 降维散点                  |
+| **③ 多头自注意力**            | **主力模块**：可切层切头的注意力热力图、本层所有头一览、因果掩码、温度与距离衰减实时可调、逐行注意力分布    |
+| **④ 逐 token 生成与采样**     | 把抽签前的每一步摊开：原始 p → 温度 → top-k → top-p → 抽中谁，被截断的候选整行灰掉     |
+| **⑤ KV Cache 加速**       | 量化「省了多少 FLOPs、付了多少显存」，含 GQA、batch、精度三个维度的影响曲线             |
 | **⑥ Transformer 层间数据流** | 可逐子步推进的 Block 结构动画（LN→Attn→残差→LN→FFN→残差），配表示热图、残差贡献、层间相似度 |
 
 侧边栏顺序即建议的浏览顺序：
@@ -57,16 +63,41 @@ npm run build    # 产物在 dist/，可直接静态托管
 
 站点负责"看见"，长文负责"讲透"。每篇 1500 字左右，配公式、类比、常见误解和动手实验清单。
 
-| 文章 | 内容 |
-| --- | --- |
-| [01 · 分词](./docs/01-tokenizer.md) | 为什么不能按字切也不能按词切；BPE 到底在统计什么；**中文为什么更费 token** |
-| [02 · 嵌入与位置编码](./docs/02-embedding.md) | 自注意力为什么是排列等变的；正弦编码的频率设计；**RoPE 为什么天然表达相对距离** |
-| [03 · 多头注意力](./docs/03-attention.md) | 为什么要除以 √d_k；多头的必要性；**attention sink 是什么以及它为什么能撑起 StreamingLLM** |
-| [04 · 采样](./docs/04-sampling.md) | 温度 vs top-p 的本质区别（改 logits 还是改支撑集）；低温度为什么会复读 |
-| [05 · KV Cache](./docs/05-kvcache.md) | O(m·n²) → O(n²+m·n) 的推导；**GQA 为什么是最划算的一刀**；prefill 与 decode 是两种负载 |
-| [06 · Transformer Block](./docs/06-transformer-block.md) | pre-norm vs post-norm；残差流视角；**FFN 才是参数大头与知识存储处** |
+| 文章                                                       | 内容                                                                |
+| -------------------------------------------------------- | ----------------------------------------------------------------- |
+| [01 · 分词](./docs/01-tokenizer.md)                        | 为什么不能按字切也不能按词切；BPE 到底在统计什么；**中文为什么更费 token**                      |
+| [02 · 嵌入与位置编码](./docs/02-embedding.md)                   | 自注意力为什么是排列等变的；正弦编码的频率设计；**RoPE 为什么天然表达相对距离**                      |
+| [03 · 多头注意力](./docs/03-attention.md)                     | 为什么要除以 √d_k；多头的必要性；**attention sink 是什么以及它为什么能撑起 StreamingLLM**   |
+| [04 · 采样](./docs/04-sampling.md)                         | 温度 vs top-p 的本质区别（改 logits 还是改支撑集）；低温度为什么会复读                      |
+| [05 · KV Cache](./docs/05-kvcache.md)                    | O(m·n²) → O(n²+m·n) 的推导；**GQA 为什么是最划算的一刀**；prefill 与 decode 是两种负载 |
+| [06 · Transformer Block](./docs/06-transformer-block.md) | pre-norm vs post-norm；残差流视角；**FFN 才是参数大头与知识存储处**                  |
 
 ---
+
+## 中英双语
+
+侧边栏顶部一键切换 中文 / English。所有 UI 文案、原理卡、公式注释都是双语的。
+
+实现方式很轻：`src/i18n/` 一个 Context + 一个 `t()`，跨模块复用的短文案放 `common.ts`，
+每个模块自己的长文案就近放在模块文件里（`const DICT = { zh, en }`），不引任何 i18n 库。
+
+## 可选：加载真实模型权重
+
+注意力模块可以切换成**真实权重**。用 [@huggingface/transformers](https://github.com/huggingface/transformers.js)
+在浏览器里（WebGPU 优先，回退 WASM）跑一个小模型，取出 `output_attentions`：
+
+| 模型 | 规模 | 说明 |
+| --- | --- | --- |
+| `Xenova/gpt2` | ≈ 90 MB | 12 层 × 12 头，英文，加载最快 |
+| `onnx-community/SmolLM2-135M-Instruct` | ≈ 100 MB | 30 层 × 9 头 |
+| `onnx-community/Qwen2.5-0.5B-Instruct` | ≈ 350 MB | 24 层 × 14 头，**支持中文** |
+
+要点：
+
+- **动态 import**，不加载就不会下载这部分代码（主包 92 kB gzip，transformers 单独分片）
+- **全程本地推理**，文本不会发到任何服务器
+- **镜像可配**：默认 `https://hf-mirror.com`，国外网络可改回 `https://huggingface.co`
+- 真实模式下层数 / 头数 / 温度由模型本身决定（锁定），因果掩码仍可切换（只影响显示）
 
 ## 关于"真实性"的诚实说明
 
@@ -101,10 +132,12 @@ src/
 │   ├── ngram.ts          从语料统计的 bigram 语言模型（给采样模块提供真实分布）
 │   ├── sampling.ts       温度 / top-k / top-p 采样
 │   ├── kvcache.ts        KV Cache 的计算量与显存解析模型
+│   ├── realModel.ts      可选：浏览器内跑真实 ONNX 模型取真实注意力
 │   ├── color.ts          热力图配色
 │   └── sharedModel.ts    全局共用的分词模型
 ├── components/           通用 UI：滑块、分段选择、热力图、条形图、折线图、token 卡片、原理卡
 ├── modules/              六个教学模块（registry.ts 是注册表）
+├── i18n/                 极简双语：Context + t()，common.ts 放跨模块文案
 ├── styles/global.css     全部样式，浅色主题 + 响应式
 └── App.tsx               侧边栏 + 内容区，无路由库
 docs/                     六篇配套长文
@@ -141,8 +174,10 @@ docs/                     六篇配套长文
 - [x] v0.2 逐 token 生成与采样、KV Cache 加速
 - [x] v0.3 Transformer 层间数据流
 - [x] v0.4 六篇配套中文长文 + Pages 自动部署
-- [ ] v0.5 可选接入 transformers.js，跑真实小模型权重
-- [ ] v0.6 中英双语界面
+- [x] v0.5 可选接入 transformers.js，浏览器内跑真实小模型权重
+- [x] v0.6 中英双语界面
+- [ ] v0.7 首页 GIF 动图 + 每模块「导出图片」按钮
+- [ ] v0.8 采样模块也接真实模型（真实 next-token 分布）
 
 ## License
 

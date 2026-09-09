@@ -4,6 +4,7 @@
  * 避免一上来就是一堵公式墙把人劝退。
  */
 import type { ReactNode } from 'react'
+import { useLang } from '../i18n'
 
 export function Principle(props: {
   title?: string
@@ -12,21 +13,22 @@ export function Principle(props: {
   detail?: ReactNode
   warn?: string
 }) {
+  const { t } = useLang()
   return (
     <details className="principle" open>
-      <summary>{props.title ?? '这一步在算什么？'}</summary>
+      <summary>{props.title ?? t('principleTitle')}</summary>
       <div className="principle-body">
         {props.formula && (
           <>
-            <h4>数学形式</h4>
+            <h4>{t('formula')}</h4>
             <div className="formula">{props.formula}</div>
           </>
         )}
-        <h4>通俗类比</h4>
+        <h4>{t('analogy')}</h4>
         <div className="analogy">{props.analogy}</div>
         {props.detail && (
           <>
-            <h4>再多说两句</h4>
+            <h4>{t('moreDetails')}</h4>
             <div>{props.detail}</div>
           </>
         )}

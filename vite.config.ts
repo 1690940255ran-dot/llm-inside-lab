@@ -9,4 +9,11 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 5173,
   },
+  // transformers.js 体积大且含 wasm，交给它自己懒加载，别让 Vite 预打包
+  optimizeDeps: {
+    exclude: ['@huggingface/transformers'],
+  },
+  build: {
+    chunkSizeWarningLimit: 800,
+  },
 })

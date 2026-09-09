@@ -13,10 +13,11 @@ export function Slider(props: {
   onChange: (v: number) => void
   format?: (v: number) => string
   hint?: string
+  disabled?: boolean
 }) {
-  const { label, value, min, max, step = 1, onChange, format, hint } = props
+  const { label, value, min, max, step = 1, onChange, format, hint, disabled } = props
   return (
-    <div className="control" style={{ minWidth: hint ? 200 : 150 }}>
+    <div className="control" style={{ minWidth: hint ? 200 : 150, opacity: disabled ? 0.45 : 1 }}>
       <label title={hint}>
         <span>{label}</span>
         <b>{format ? format(value) : value}</b>
@@ -27,6 +28,7 @@ export function Slider(props: {
         max={max}
         step={step}
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(Number(e.target.value))}
       />
     </div>

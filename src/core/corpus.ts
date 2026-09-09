@@ -55,9 +55,9 @@ export const DEFAULT_CORPUS = [
 ].join('\n')
 
 /** 界面上给用户的示例文本（覆盖中英文、标点、数字，方便观察边界情况） */
-export const SAMPLE_TEXTS: { label: string; text: string }[] = [
-  { label: '中英混排', text: '注意力机制让模型关注输入中不同位置的信息。' },
-  { label: '英文长句', text: 'the model predicts the next token given all previous tokens' },
-  { label: '指代消解', text: '猫追着老鼠跑，因为它饿了。' },
-  { label: '数字与符号', text: 'GPT-4 有 1.8T 参数，上下文 128K token。' },
+export const SAMPLE_TEXTS: { label: string; labelEn: string; text: string }[] = [
+  { label: '中英混排', labelEn: 'Mixed zh/en', text: '注意力机制让模型关注输入中不同位置的信息。' },
+  { label: '英文长句', labelEn: 'English', text: 'the model predicts the next token given all previous tokens' },
+  { label: '指代消解', labelEn: 'Coreference', text: '猫追着老鼠跑，因为它饿了。' },
+  { label: '数字与符号', labelEn: 'Digits', text: 'GPT-4 有 1.8T 参数，上下文 128K token。' },
 ]

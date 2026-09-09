@@ -226,3 +226,27 @@ export function rowTopK(row: number[], k: number): { index: number; value: numbe
     .sort((a, b) => b.value - a.value)
     .slice(0, k)
 }
+
+export interface HeadMetrics {
+  avgEntropy: number
+  avgMax: number
+  sinkRatio: number
+}
+
+/**
+ * 对任意注意力矩阵算同一组指标。
+ * 真实模型加载后没有"头性格"可言（那是模拟时注入的），但熵、最大权重、sink 占比照样能算。
+ */
+export function headMetrics(weights: number[][]): HeadMetrics {
+  const n = weights.length
+  if (n === 0) return { avgEntropy: 0, avgMax: 0, sinkRatio: 0 }
+  let e = 0
+  let m = 0
+  let s = 0
+  for (const row of weights) {
+    e += entropyOf(row)
+    m += Math.max(...row)
+    s += row[0] ?? 0
+  }
+  return { avgEntropy: e / n, avgMax: m / n, sinkRatio: s / n }
+}
