@@ -14,6 +14,11 @@ Frontend only · no paid APIs · bilingual (中文 / EN) · responsive · six pl
 ![docs](https://img.shields.io/badge/docs-ZH%2FEN%20%C3%976-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+![stars](https://img.shields.io/github/stars/1690940255ran-dot/llm-inside-lab?style=flat&label=stars&color=yellow)
+![last commit](https://img.shields.io/github/last-commit/1690940255ran-dot/llm-inside-lab?style=flat)
+![deploy](https://github.com/1690940255ran-dot/llm-inside-lab/actions/workflows/deploy.yml/badge.svg)
+![bundle](https://img.shields.io/badge/bundle-101%20kB%20gzip-blueviolet)
+
 ---
 
 ## Live demo

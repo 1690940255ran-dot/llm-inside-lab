@@ -14,6 +14,11 @@
 ![docs](https://img.shields.io/badge/docs-%E4%B8%AD%2FEN%20%C3%976-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+![stars](https://img.shields.io/github/stars/1690940255ran-dot/llm-inside-lab?style=flat&label=stars&color=yellow)
+![last commit](https://img.shields.io/github/last-commit/1690940255ran-dot/llm-inside-lab?style=flat)
+![deploy](https://github.com/1690940255ran-dot/llm-inside-lab/actions/workflows/deploy.yml/badge.svg)
+![bundle](https://img.shields.io/badge/bundle-101%20kB%20gzip-blueviolet)
+
 ---
 
 ## 在线体验
@@ -248,6 +253,8 @@ scripts/
 ├── probe-attentions.mjs  探测 ONNX 输出签名（就是它证明了拿不到真实注意力）
 ├── probe-tokenizers.mjs  对比三个模型的分词与逐 id 解码结果
 ├── capture-hero.mjs      用 CDP 抓首页动图的帧（供 GIF 用，需 ws）
+├── verify-pages.mjs      线上部署验收：真实 Chrome 加载、双语切换、控制台错误、截图
+├── verify-modules.mjs    线上模块验收：逐个切模块 + 点「导出图片」校验导出成功
 └── make-gif.py           把帧拼成 docs/demo.gif（需 Pillow）
 docs/                     六篇配套长文（中文） + en/（英文版）
 .github/workflows/        GitHub Pages 自动部署
