@@ -7,9 +7,21 @@
 ![Node](https://img.shields.io/badge/node-%E2%89%A518-339933)
 ![React](https://img.shields.io/badge/react-18-61dafb)
 ![TS](https://img.shields.io/badge/typescript-5-3178c6)
-![tests](https://img.shields.io/badge/tests-93%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-112%20passing-brightgreen)
 ![i18n](https://img.shields.io/badge/i18n-%E4%B8%AD%2FEN-blue)
+![docs](https://img.shields.io/badge/docs-%E4%B8%AD%2FEN%20%C3%976-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
+
+---
+
+## 一图看全站
+
+首页有一个自动播放的流水线动图（文本 → token → 注意力 → 下一个 token 的分布），
+每一步都由 `src/core/` 里那套已单测的函数算出来：
+
+![demo](./docs/demo.gif)
+
+想重新生成这张 GIF：`npm run dev` 起服务后 `npm run capture:hero`，再 `npm run make:gif`。
 
 ---
 
@@ -36,6 +48,9 @@ npm run build    # 产物在 dist/，可直接静态托管
 
 ## 六个模块
 
+每个模块的主视觉卡片右上角都有一个「导出图片」按钮，一键把当前卡片导出成 2 倍 PNG
+（纯浏览器本地生成，`src/core/exportImage.ts`，零依赖）。做 PPT / 笔记 / 汇报直接拿图。
+
 | 模块                      | 你能玩到什么                                                    |
 | ----------------------- | --------------------------------------------------------- |
 | **① 分词**                | 真实的 BPE 算法，合并表从语料现场学出来。可调合并次数、可换自定义语料，带逐步合并动画和字符级对照       |
@@ -57,7 +72,7 @@ npm run build    # 产物在 dist/，可直接静态托管
 
 ## 配套长文
 
-站点负责"看见"，长文负责"讲透"。每篇 1500 字左右，配公式、类比、常见误解和动手实验清单。
+站点负责"看见"，长文负责"讲透"。每篇 1500 字左右，配公式、类比、常见误解和动手实验清单。**中英双语，章节编号一一对应。**
 
 | 文章                                                       | 内容                                                                |
 | -------------------------------------------------------- | ----------------------------------------------------------------- |
@@ -67,6 +82,9 @@ npm run build    # 产物在 dist/，可直接静态托管
 | [04 · 采样](./docs/04-sampling.md)                         | 温度 vs top-p 的本质区别（改 logits 还是改支撑集）；低温度为什么会复读                      |
 | [05 · KV Cache](./docs/05-kvcache.md)                    | O(m·n²) → O(n²+m·n) 的推导；**GQA 为什么是最划算的一刀**；prefill 与 decode 是两种负载 |
 | [06 · Transformer Block](./docs/06-transformer-block.md) | pre-norm vs post-norm；残差流视角；**FFN 才是参数大头与知识存储处**                  |
+
+🇬🇧 **English mirror**：[`docs/en/`](./docs/en/README.md) —— 六篇长文的完整英文版，
+序号、结构、动手清单与中文版对齐，可以中英对着读。
 
 ---
 
@@ -197,10 +215,12 @@ src/
 │   ├── sampling.ts       温度 / top-k / top-p 采样
 │   ├── kvcache.ts        KV Cache 的计算量与显存解析模型
 │   ├── realModel.ts      可选：浏览器内跑真实 ONNX 模型（真实 logits + KV 形状）
+│   ├── exportImage.ts    零依赖的 DOM → PNG 导出（SVG foreignObject + 内联 CSS）
 │   ├── color.ts          热力图配色
 │   └── sharedModel.ts    全局共用的分词模型
 ├── components/           通用 UI：滑块、分段选择、热力图、条形图、折线图、token 卡片、原理卡
-│   └── RealModelPanel.tsx  真实模型面板（模型选择 / 镜像 / 真实分布表 / KV 实测）
+│   ├── RealModelPanel.tsx  真实模型面板（模型选择 / 镜像 / 真实分布表 / KV 实测）
+│   └── HeroDemo.tsx        首页流水线动图（由 core/ 的真实函数驱动，可暂停）
 ├── modules/              六个教学模块（registry.ts 是注册表）
 ├── i18n/                 极简双语：Context + t()，common.ts 放跨模块文案
 ├── styles/global.css     全部样式，浅色主题 + 响应式
@@ -208,8 +228,11 @@ src/
 tests/                    vitest 单测 + 可选的端到端集成测试
 scripts/
 ├── probe-attentions.mjs  探测 ONNX 输出签名（就是它证明了拿不到真实注意力）
-└── probe-tokenizers.mjs  对比三个模型的分词与逐 id 解码结果
-docs/                     六篇配套长文
+├── probe-tokenizers.mjs  对比三个模型的分词与逐 id 解码结果
+├── capture-hero.mjs      用 CDP 抓首页动图的帧（供 GIF 用，需 ws）
+└── make-gif.py           把帧拼成 docs/demo.gif（需 Pillow）
+docs/                     六篇配套长文（中文） + en/（英文版）
+docs/demo.gif             首页动图的 GIF 版本（README 用）
 .github/workflows/        GitHub Pages 自动部署
 ```
 
@@ -247,9 +270,11 @@ docs/                     六篇配套长文
 - [x] v0.6 中英双语界面
 - [x] v0.6.1 `core/` 单测（86 个）+ 真实模型端到端集成测试；修掉镜像路径、dtype、token 对齐三个 bug；
       真实权重从"注意力"改挂到"采样 + KV Cache"（因为 ONNX 拿不到注意力，有实测证据）
-- [ ] v0.7 首页 GIF 动图 + 每模块「导出图片」按钮
-- [ ] v0.7 docs/ 六篇长文的英文版（目前只有中文，英文界面下暂无对应长文）
-- [ ] v0.8 采样模块也接真实模型（真实 next-token 分布）
+- [x] v0.7 首页流水线动图（自动播放，由 core/ 真实函数驱动）+ 每模块「导出图片」按钮（零依赖 PNG 导出）
+- [x] v0.7 docs/ 六篇长文的英文版（`docs/en/`，与中文版章节一一对应）
+- [x] v0.8 采样模块接真实模型 —— 真实 next-token 分布已落地：温度 / top-k / top-p
+      直接作用在真实 logits 上（`RealModelPanel` → `sampleNext(data.logits, cfg, seed)`），
+      顺带读出 KV Cache 的实测张量形状
 
 ## License
 

@@ -303,6 +303,7 @@ which is why it trains to hundreds of layers while post-norm needs careful warmu
             ? `${c.current}— ${c.inputEmb}`
             : `${c.current}${curLayer + 1} ${c.layerOf} · ${SUB_STEPS[curSub]?.name}`
         }
+        exportName="06-flow-block"
       >
         <BlockDiagram activeSub={curSub} dModel={cfg.dModel} dFF={cfg.dFF} zh={c} />
         <div className="controls" style={{ marginTop: 12 }}>
@@ -352,6 +353,7 @@ which is why it trains to hundreds of layers while post-norm needs careful warmu
       <Card
         title={`${c.stateTitle}${step === 0 ? c.stateSim : `${c.stateLayer}${curLayer + 1}${c.stateLayer2}${SUB_STEPS[curSub]?.name}）`}`}
         hint={c.stateHint}
+        exportName="06-flow-state"
       >
         {currentState.length > 0 ? (
           <>

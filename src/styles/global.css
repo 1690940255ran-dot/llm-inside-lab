@@ -373,6 +373,41 @@ input[type='range'] {
   cursor: not-allowed;
 }
 
+/* ---------- 导出图片按钮 ---------- */
+.btn-export {
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  font: inherit;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--text-3);
+  padding: 3px 9px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.btn-export:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-export.ok {
+  border-color: var(--accent-2);
+  color: var(--accent-2);
+}
+
+.btn-export.err {
+  border-color: #b0402f;
+  color: #b0402f;
+}
+
+.btn-export:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
 .chip-row {
   display: flex;
   flex-wrap: wrap;
@@ -694,6 +729,174 @@ input[type='range'] {
 .hero-card.soon:hover {
   border-color: var(--border);
   background: var(--surface);
+}
+
+/* ---------- 首页动图 ---------- */
+.hero-demo-card {
+  border-left: 3px solid var(--accent);
+  padding-bottom: 14px;
+}
+
+.hd-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.hd-col {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  padding: 10px 10px 12px;
+  min-width: 0;
+  transition: border-color 0.25s, background 0.25s;
+}
+
+.hd-col.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.hd-label {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-2);
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hd-caption {
+  font-weight: 400;
+  font-size: 10.5px;
+  color: var(--text-3);
+}
+
+.hd-body {
+  min-height: 118px;
+}
+
+/* ① 输入文本 */
+.hd-text {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--text);
+  word-break: break-all;
+}
+
+.hd-caret {
+  display: inline-block;
+  width: 2px;
+  height: 13px;
+  vertical-align: -2px;
+  background: var(--accent);
+  animation: hd-blink 1s steps(1) infinite;
+  margin-left: 1px;
+}
+
+@keyframes hd-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ② token 卡片 */
+.hd-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.hd-chip {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  transition: opacity 0.28s, transform 0.28s;
+}
+
+/* ③ 注意力热力图 */
+.hd-heat {
+  display: grid;
+  gap: 1px;
+}
+
+.hd-cell {
+  aspect-ratio: 1;
+  border-radius: 1.5px;
+  transition: background 0.3s;
+}
+
+/* ④ 候选分布 */
+.hd-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.hd-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hd-bar-label {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--text-2);
+  width: 42px;
+  flex: 0 0 42px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hd-bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--surface);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.hd-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  opacity: 0.55;
+  transition: width 0.45s ease-out;
+}
+
+.hd-bar-fill.win {
+  background: var(--accent-2);
+  opacity: 1;
+}
+
+.hd-bar-val {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+  width: 26px;
+  flex: 0 0 26px;
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  .hd-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hd-caret {
+    animation: none;
+  }
 }
 
 @media (max-width: 900px) {

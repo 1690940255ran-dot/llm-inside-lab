@@ -179,7 +179,11 @@ RoPE (LLaMA / Qwen / Mistral):
         </div>
       </Card>
 
-      <Card title={`${c.embTitle}${D_SHOW} ${c.embTitle2}`} hint={c.embHint}>
+      <Card
+        title={`${c.embTitle}${D_SHOW} ${c.embTitle2}`}
+        hint={c.embHint}
+        exportName="02-embedding-heatmap"
+      >
         <Heatmap matrix={embNorm} rowLabels={labels} colorOf={divergingColor} />
         <HeatLegend min="-1" max="1" colorOf={divergingColor} />
         <div style={{ marginTop: 12 }}>
@@ -229,7 +233,7 @@ RoPE (LLaMA / Qwen / Mistral):
         <HeatLegend min="-1" max="1" colorOf={divergingColor} />
       </Card>
 
-      <Card title={c.ropeTitle} hint={c.ropeHint}>
+      <Card title={c.ropeTitle} hint={c.ropeHint} exportName="02-embedding-rope">
         <div className="controls" style={{ marginBottom: 12 }}>
           <Slider
             label={c.ropeGroup}

@@ -405,6 +405,7 @@ multi-head: split d_model into h slices, run each independently, concat + projec
       <Card
         title={`${c.weightTitle} · L${safeLayer + 1} / H${safeHead + 1}`}
         hint={c.weightHint}
+        exportName="03-attention-heatmap"
       >
         {patternInfo && (
           <div className="note" style={{ marginBottom: 10 }}>
@@ -440,6 +441,7 @@ multi-head: split d_model into h slices, run each independently, concat + projec
       <Card
         title={`#${selectedRow + 1}「${activeTokens[selectedRow] ?? ''}」${c.rowTitle}`}
         hint={c.rowHint}
+        exportName="03-attention-row"
       >
         <BarList
           items={topK.map((x) => ({

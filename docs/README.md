@@ -15,6 +15,8 @@
 | 05 | [KV Cache：用显存换计算量](./05-kvcache.md) | ⑤ KV Cache |
 | 06 | [Transformer Block：残差高速公路与 FFN](./06-transformer-block.md) | ⑥ 层间数据流 |
 
+**English mirror**: [en/](./en/README.md) — 章节编号、顺序与中文版一一对应，方便中英对着读。
+
 ## 一条主线
 
 大模型做的事实上只有一件事：**根据前面的 token 预测下一个 token**。

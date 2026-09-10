@@ -9,7 +9,7 @@ export type Lang = 'zh' | 'en'
 export const COMMON = {
   zh: {
     brandTitle: 'LLM 内部机制可视化实验室',
-    brandSub: 'v0.6 · 纯前端 · 中英双语',
+    brandSub: 'v0.7 · 纯前端 · 中英双语',
     navHome: '首页',
     navHomeSub: '这个项目在做什么',
 
@@ -47,6 +47,14 @@ export const COMMON = {
     planBadge: '规划中',
     enterText: '请输入文本。',
 
+    exportImage: '导出图片',
+    exportImageHint: '把这张卡导出成 PNG（2 倍图，纯浏览器本地生成）',
+    exporting: '导出中…',
+    exportOk: '已导出',
+    exportFail: '导出失败',
+    heroDemoTitle: '一分钟看懂整条链路',
+    heroDemoHint: '自动播放：文本 → token → 嵌入 → 注意力 → 下一个 token 的分布',
+
     realSection: '真实模型：真实的下一个 token 分布（可选）',
     realIntro:
       '上面的分布来自内置语料统计出来的 bigram。点下面的按钮可以在浏览器里真正跑一个小模型，把上面那三个旋钮（温度 / top-k / top-p）直接作用在真实权重算出的 logits 上。首次需要下载 129 MB 起的权重，之后走浏览器缓存。',
@@ -63,7 +71,7 @@ export const COMMON = {
   },
   en: {
     brandTitle: 'Inside the LLM',
-    brandSub: 'v0.6 · frontend only · bilingual',
+    brandSub: 'v0.7 · frontend only · bilingual',
     navHome: 'Home',
     navHomeSub: 'What this project is',
 
@@ -101,6 +109,14 @@ export const COMMON = {
     sample: 'Sample',
     planBadge: 'planned',
     enterText: 'Please enter some text.',
+
+    exportImage: 'Export PNG',
+    exportImageHint: 'Export this card as a PNG (2x, generated locally in your browser)',
+    exporting: 'Exporting…',
+    exportOk: 'saved',
+    exportFail: 'export failed',
+    heroDemoTitle: 'The whole pipeline in one minute',
+    heroDemoHint: 'Auto-playing: text → tokens → embeddings → attention → next-token distribution',
 
     realSection: 'Real model: the actual next-token distribution (optional)',
     realIntro:

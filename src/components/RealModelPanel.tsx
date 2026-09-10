@@ -161,7 +161,11 @@ export function RealModelPanel(props: { text: string; cfg: SamplingConfig; seed:
   const step = data ? sampleNext(data.logits, props.cfg, props.seed) : null
 
   return (
-    <Card title={t('realSection')} hint={status === 'ready' ? t('realReady') : undefined}>
+    <Card
+      title={t('realSection')}
+      hint={status === 'ready' ? t('realReady') : undefined}
+      exportName="04-real-model-distribution"
+    >
       <div className="note" style={{ marginBottom: 10 }}>
         {t('realIntro')}
       </div>

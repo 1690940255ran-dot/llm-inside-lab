@@ -301,7 +301,7 @@ memory: KV bytes per token
         </div>
       </Card>
 
-      <Card title={c.costTitle} hint={c.costHint}>
+      <Card title={c.costTitle} hint={c.costHint} exportName="05-kvcache-flops">
         <LineChart
           lines={costLines}
           xLabel={c.xCost}
@@ -314,7 +314,7 @@ memory: KV bytes per token
         </div>
       </Card>
 
-      <Card title={c.memTitle} hint={c.memHint}>
+      <Card title={c.memTitle} hint={c.memHint} exportName="05-kvcache-memory">
         <LineChart
           lines={memLines}
           xLabel={c.xMem}

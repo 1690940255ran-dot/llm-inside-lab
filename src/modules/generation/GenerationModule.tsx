@@ -337,6 +337,7 @@ top-p:   accumulate from the top and keep the fewest candidates exceeding p
       <Card
         title={c.tableTitle}
         hint={`${c.cond}${source === 'bigram' ? c.bigramHit : c.fallback}${c.cond2}`}
+        exportName="04-sampling-distribution"
       >
         <table className="tbl">
           <thead>

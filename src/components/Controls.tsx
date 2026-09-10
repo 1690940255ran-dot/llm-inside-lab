@@ -2,7 +2,11 @@
  * 通用 UI 控件：滑块、分段选择器、开关
  * 全部为受控组件，样式统一走 global.css
  */
-import type { ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
+import { exportNodeAsPng } from '../core/exportImage'
+import { useLang } from '../i18n'
+
+export type ExportState = 'idle' | 'busy' | 'ok' | 'error'
 
 export function Slider(props: {
   label: string
@@ -81,13 +85,78 @@ export function Toggle(props: { label: string; checked: boolean; onChange: (v: b
   )
 }
 
-export function Card(props: { title?: ReactNode; hint?: ReactNode; children: ReactNode }) {
+/**
+ * 「导出图片」按钮
+ *
+ * 传 target（一个 ref）就导出那个节点；不传就导出最近的一张卡片（由 Card 自己接）。
+ * 实现见 core/exportImage.ts：SVG foreignObject + 内联 CSS，零依赖。
+ */
+export function ExportButton(props: {
+  target: React.RefObject<HTMLElement>
+  filename: string
+  label?: string
+}) {
+  const { t } = useLang()
+  const [state, setState] = useState<ExportState>('idle')
+  const [msg, setMsg] = useState('')
+
+  const run = async () => {
+    if (!props.target.current || state === 'busy') return
+    setState('busy')
+    setMsg('')
+    try {
+      const res = await exportNodeAsPng(props.target.current, { filename: props.filename })
+      setState('ok')
+      setMsg(`${res.width}×${res.height}`)
+    } catch (e: any) {
+      setState('error')
+      setMsg(e?.message ?? String(e))
+    } finally {
+      setTimeout(() => setState('idle'), 2600)
+    }
+  }
+
+  const text =
+    state === 'busy'
+      ? t('exporting')
+      : state === 'ok'
+        ? `✓ ${t('exportOk')} ${msg}`
+        : state === 'error'
+          ? `✕ ${t('exportFail')}`
+          : props.label ?? t('exportImage')
+
   return (
-    <div className="card">
-      {props.title && (
+    <button
+      className={`btn-export${state === 'error' ? ' err' : ''}${state === 'ok' ? ' ok' : ''}`}
+      onClick={run}
+      disabled={state === 'busy'}
+      title={state === 'error' ? msg : t('exportImageHint')}
+    >
+      {text}
+    </button>
+  )
+}
+
+export function Card(props: {
+  title?: ReactNode
+  hint?: ReactNode
+  /** 传了这个就会在标题栏右侧出现「导出图片」按钮 */
+  exportName?: string
+  children: ReactNode
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  return (
+    <div className="card" ref={ref}>
+      {(props.title || props.exportName) && (
         <div className="card-title">
           <span>{props.title}</span>
           {props.hint && <span className="hint">{props.hint}</span>}
+          {props.exportName && (
+            <>
+              <span style={{ flex: 1, minWidth: 8 }} />
+              <ExportButton target={ref} filename={props.exportName} />
+            </>
+          )}
         </div>
       )}
       {props.children}

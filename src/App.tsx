@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { MODULES } from './modules/registry'
 import { useLang } from './i18n'
+import { HeroDemo } from './components/HeroDemo'
 
 function Home() {
   const { lang, t } = useLang()
@@ -26,6 +27,8 @@ function Home() {
           {t('homeHonest2c')}
         </p>
       </div>
+
+      <HeroDemo />
 
       <div className="hero-grid">
         {MODULES.map((m) => (

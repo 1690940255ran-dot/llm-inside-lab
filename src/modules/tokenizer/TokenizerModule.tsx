@@ -243,7 +243,7 @@ export function TokenizerModule() {
         )}
       </Card>
 
-      <Card title={c.result} hint={c.resultHint}>
+      <Card title={c.result} hint={c.resultHint} exportName="01-tokenizer-result">
         <TokenChips tokens={tokens} />
         <div style={{ marginTop: 14 }}>
           <Stats
