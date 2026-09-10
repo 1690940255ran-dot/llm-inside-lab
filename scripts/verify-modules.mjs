@@ -73,7 +73,7 @@ const clickNav = (i) => evalJS(`(() => {
 
 const navLabels = await evalJS(`[...document.querySelectorAll('.nav-item')].map(b=>b.textContent.trim()).filter(Boolean)`)
 log('nav items (' + navLabels.length + '):', JSON.stringify(navLabels))
-if (navLabels.length < 9) log('!! 期望至少 9 个模块，实际 ' + navLabels.length)
+if (navLabels.length < 10) log('!! 期望至少 10 个模块，实际 ' + navLabels.length)
 
 const results = []
 for (let i = 0; i < navLabels.length; i++) {
@@ -151,26 +151,10 @@ if (navIndex('MoE') >= 0) {
   checks.push({ module: 'MoE', ...moe })
   log('MoE check:', JSON.stringify(moe))
 
-  // 明暗主题各跑一遍，确认没有渲染塌陷
-  const themes = await evalJS(`(async () => {
-    const out = {}
-    const btns = [...document.querySelectorAll('.sidebar button, header button')]
-    const themeBtn = btns.find(b=>/浅色|深色|light|dark/i.test(b.textContent))
-    out.foundThemeBtn = !!themeBtn
-    if (!themeBtn) return out
-    const before = getComputedStyle(document.body).backgroundColor
-    themeBtn.click()
-    await new Promise(r=>setTimeout(r,1200))
-    const after = getComputedStyle(document.body).backgroundColor
-    out.bgBefore = before
-    out.bgAfter = after
-    out.changed = before !== after
-    out.svgs = document.querySelectorAll('svg').length
-    out.cards = document.querySelectorAll('.card').length
-    return out
-  })()`, true)
-  checks.push({ module: 'MoE-theme', ...themes })
-  log('Theme check:', JSON.stringify(themes))
+  // 这里原来有一段"明暗主题各跑一遍"的检查，已经删掉：
+  // 站点是**单一浅色主题**（global.css 里没有任何 dark / data-theme / prefers-color-scheme），
+  // 所以那个检查永远只会打印 foundThemeBtn:false —— 看着像"查过了"，
+  // 其实一次都没生效。假的安全感比没有检查更糟，不如删掉。
 }
 
 // ⑧ 量化：直方图/对比表在，且切方案不报错
@@ -198,21 +182,137 @@ if (navIndex('上下文') >= 0 || navIndex('Context') >= 0) {
   await sleep(2500)
   const cx = await evalJS(`(async () => {
     const out = {}
-    const segs = [...document.querySelectorAll('.segmented button')]
-    out.segLabels = segs.map(b=>b.textContent.trim())
-    // 依次点每个方法，确认都能渲染
+    /**
+     * 关键：页面里有好几组 .segmented，其中一组是**语言切换（中文 / English）**。
+     * 早先这里无脑点遍所有 segmented button，结果把界面语言切成了英文，
+     * 于是后面所有"按中文 label 读 DOM"的断言全部静默返回 null ——
+     * 看起来像"检查过了"，其实什么都没查到。所以这里必须只取目标那一组。
+     * 外推方法的名字本身永远是英文（none / linear interpolation / NTK-aware / YaRN），
+     * 所以用它们来定位是语言无关的。
+     */
+    let target = null
+    for (const g of document.querySelectorAll('.segmented')) {
+      const txt = [...g.querySelectorAll('button')].map(b => b.textContent.trim())
+      if (txt.includes('中文') || txt.includes('English')) continue
+      if (txt.some(t => /RoPE|interpolation|YaRN|NTK|vanilla/i.test(t))) target = g
+    }
+    out.segLabels = target ? [...target.querySelectorAll('button')].map(b=>b.textContent.trim()) : []
     const marks = []
-    for (let k = 0; k < segs.length; k++) {
-      segs[k].click()
-      await new Promise(r=>setTimeout(r,900))
-      marks.push(document.querySelectorAll('svg').length)
+    if (target) {
+      for (const b of target.querySelectorAll('button')) {
+        b.click()
+        await new Promise(r=>setTimeout(r,900))
+        marks.push(document.querySelectorAll('svg').length)
+      }
     }
     out.svgCountsPerMethod = marks
+    // 语言没被切走（切走了后面所有中文断言都会失效）
+    out.stillChinese = /[\\u4e00-\\u9fa5]/.test(document.body.innerText)
     out.textLen = document.body.innerText.length
     return out
   })()`, true)
   checks.push({ module: 'Context', ...cx })
   log('Context check:', JSON.stringify(cx))
+  if (!cx.stillChinese) log('!! 界面语言被切成了非中文，后续断言会失效')
+}
+
+/**
+ * ⑩ 迷你 GPT：这一条和别的不一样——它真的点「开始训练」，等训练跑完，
+ * 再断言 loss 确实降下来了。别的模块只需要"能渲染"，这个模块必须"真算过"。
+ *
+ * 注意：轮询必须放在 Node 侧，不能塞进一次 Runtime.evaluate ——
+ * 单次 evaluate 有 90 秒上限，而无 GPU 的 headless 里跑满 1200 步可能更久，
+ * 塞进去会撞 "Runtime.evaluate timeout"（我们第一版就是这么挂的）。
+ */
+const trainIdx = navIndex('迷你') >= 0 ? navIndex('迷你') : navIndex('mini')
+if (trainIdx >= 0) {
+  await clickNav(trainIdx)
+  await sleep(3000)
+
+  /**
+   * 每次只读一小段 DOM，快速返回。
+   * label 一律给中英两份 —— 免得哪天语言被切走，断言又静默变成 null。
+   */
+  const readTrain = () =>
+    evalJS(`(() => {
+      const stat = (labels) => {
+        const want = [].concat(labels)
+        for (const s of document.querySelectorAll('.stats .stat')) {
+          const k = s.querySelector('.k')
+          if (k && want.indexOf(k.textContent.trim()) >= 0) {
+            const v = s.querySelector('.v')
+            return v ? v.textContent.trim() : null
+          }
+        }
+        return null
+      }
+      return {
+        step: stat(['当前步', 'step']),
+        lossNow: stat(['当前 loss', 'current loss']),
+        lossInit: stat(['初始 loss', 'initial loss']),
+        lossBest: stat(['最优 loss', 'best loss']),
+        samples: document.querySelectorAll('.sample-row').length,
+        attnCompare: !!document.querySelector('.two-col'),
+        stillChinese: /[\\u4e00-\\u9fa5]/.test(document.body.innerText),
+      }
+    })()`)
+
+  const open = await evalJS(`(async () => {
+    const out = {}
+    const stat = (labels) => {
+      const want = [].concat(labels)
+      for (const s of document.querySelectorAll('.stats .stat')) {
+        const k = s.querySelector('.k')
+        if (k && want.indexOf(k.textContent.trim()) >= 0) {
+          const v = s.querySelector('.v')
+          return v ? v.textContent.trim() : null
+        }
+      }
+      return null
+    }
+    out.langChinese = /[\\u4e00-\\u9fa5]/.test(document.body.innerText)
+    out.exportButtons = document.querySelectorAll('.btn-export').length
+    out.paramCount = stat(['参数量', 'parameters'])
+    out.flopsPerToken = stat(['每 token FLOPs', 'FLOPs / token'])
+    out.corpusPresets = document.querySelectorAll('.chip-row .chip').length
+    out.hasUpload = !!document.querySelector('input[type=file]')
+    out.hasTextarea = !!document.querySelector('textarea')
+    out.hasBaselineNote = document.body.innerText.includes('随机猜测基线') ||
+                          document.body.innerText.includes('random-guess baseline')
+    const startBtn = [...document.querySelectorAll('.btn.primary')]
+      .find(b => /开始训练|Start training/.test(b.textContent))
+    out.foundStart = !!startBtn
+    if (startBtn) startBtn.click()
+    return out
+  })()`, true)
+
+  let last = { step: null, lossNow: null, lossInit: null, samples: 0, attnCompare: false }
+  let done = false
+  for (let k = 0; k < 75; k++) {
+    await sleep(2000)
+    const cur = await readTrain()
+    if (cur) {
+      last = { ...last, ...cur }
+      if (cur.samples) last.samples = Math.max(last.samples, cur.samples)
+      if (cur.attnCompare) last.attnCompare = true
+      if (cur.step && /^\d+ \/ \d+$/.test(cur.step)) {
+        const [a, b] = cur.step.split('/').map((x) => parseInt(x.trim(), 10))
+        if (a >= b) { done = true; break }
+      }
+    }
+  }
+
+  const tr = { ...open, ...last, reachedEnd: done }
+  const li = parseFloat(tr.lossInit)
+  const ln = parseFloat(tr.lossNow)
+  tr.lossDropped = Number.isFinite(li) && Number.isFinite(ln) && ln < li * 0.5
+  checks.push({ module: 'Train', ...tr })
+  log('Train check:', JSON.stringify(tr))
+  if (!tr.foundStart) log('!! 没找到「开始训练」按钮')
+  if (!tr.lossDropped) log('!! 训练后 loss 没有明显下降（init=' + tr.lossInit + ' now=' + tr.lossNow + '）')
+  if (!tr.reachedEnd) log('!! 训练没有跑到终点，step=' + tr.step)
+  if (tr.exportButtons < 4) log('!! 期望 4 个导出按钮，实际 ' + tr.exportButtons)
+  if (!tr.attnCompare) log('!! 注意力训练前后对比（.two-col）没出现')
 }
 
 fs.writeFileSync(path.join(OUT_DIR, 'modules.json'), JSON.stringify({ url: URL_TARGET, navLabels, results, checks, errs }, null, 2))

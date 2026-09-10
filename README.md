@@ -4,20 +4,20 @@
 
 [English](./README_EN.md) · 简体中文
 
-纯前端 · 零付费依赖 · 中英双语 · 响应式 · 九个模块全部可玩 · 可选加载真实模型权重
+纯前端 · 零付费依赖 · 中英双语 · 响应式 · 十个模块全部可玩 · 可选加载真实模型权重 · 可选在浏览器里真的训一个迷你 GPT
 
 ![Node](https://img.shields.io/badge/node-%E2%89%A518-339933)
 ![React](https://img.shields.io/badge/react-18-61dafb)
 ![TS](https://img.shields.io/badge/typescript-5-3178c6)
-![tests](https://img.shields.io/badge/tests-215%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-242%20passing-brightgreen)
 ![i18n](https://img.shields.io/badge/i18n-%E4%B8%AD%2FEN-blue)
-![docs](https://img.shields.io/badge/docs-%E4%B8%AD%2FEN%20%C3%979-orange)
+![docs](https://img.shields.io/badge/docs-%E4%B8%AD%2FEN%20%C3%9710-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ![stars](https://img.shields.io/github/stars/1690940255ran-dot/llm-inside-lab?style=flat&label=stars&color=yellow)
 ![last commit](https://img.shields.io/github/last-commit/1690940255ran-dot/llm-inside-lab?style=flat)
 ![deploy](https://github.com/1690940255ran-dot/llm-inside-lab/actions/workflows/deploy.yml/badge.svg)
-![bundle](https://img.shields.io/badge/bundle-133%20kB%20gzip-blueviolet)
+![bundle](https://img.shields.io/badge/bundle-143%20kB%20gzip-blueviolet)
 
 ---
 
@@ -52,15 +52,16 @@
 | | |
 | --- | --- |
 | **算法是真的，不是画出来的** | BPE 合并表真从语料频次里数出来；注意力走完整的 Q/K/V 投影 → `/√d_k` 缩放 → 因果掩码 → softmax；采样三参数与 HF `transformers` 的 logits warper 逻辑一致 |
+| **权重也可以是当场训出来的** | 模块⑩ 是全站唯一一个权重不靠模拟的地方：手写前向 + 手写反向 + 手写 AdamW，在 Web Worker 里真的把验证 loss 从 2.5834 压到 0.0137。梯度正确性用**下降方向判据**验证（float32 里逐参数有限差分不可用，我们踩过这个坑） |
 | **可选跑真实模型** | 浏览器内（WebGPU / WASM）真跑 SmolLM2 / LFM2 / Qwen3，把温度 / top-k / top-p 直接作用在**真实 logits** 上，顺带读出 KV Cache 的实测张量形状 |
-| **不骗人** | 哪里是模拟、哪里是真算，首页和每个模块都写清楚；拿不到的东西（真实注意力热力图）直接贴出实测证据说明为什么拿不到 |
-| **零 UI / 图表库** | 热力图用 `<table>`、折线图用 SVG、导出 PNG 自己实现（`core/exportImage.ts`），主包 133 kB gzip |
-| **215 个单测** | `core/` 全纯函数，可脱离浏览器断言；踩过的每个坑都有回归测试 |
-| **中英双语** | 界面双语，九篇配套长文也有完整英文版，章节一一对应 |
+| **不骗人** | 哪里是模拟、哪里是真算，首页和每个模块都写清楚；拿不到的东西（真实注意力热力图）直接贴出实测证据说明为什么拿不到；训不出来的时候也如实说明（实测 8 个种子有 2 个会失败） |
+| **零 UI / 图表库** | 热力图用 `<table>`、折线图用 SVG、导出 PNG 自己实现（`core/exportImage.ts`），主包 143 kB gzip |
+| **242 个单测** | `core/` 全纯函数，可脱离浏览器断言；踩过的每个坑都有回归测试 |
+| **中英双语** | 界面双语，十篇配套长文也有完整英文版，章节一一对应 |
 
 ---
 
-## 九个模块
+## 十个模块
 
 每个模块的主视觉卡片右上角都有「导出图片」按钮，一键导出 2 倍 PNG（纯浏览器本地生成）。
 做 PPT / 笔记 / 汇报直接拿图。
@@ -76,9 +77,11 @@
 | **⑦ 稀疏专家 MoE** | 路由是**真的训出来的**：k-means 式专精更新让专家自己长出分工。负载倾斜的根源（Zipf 数据先验）与两条治法（aux loss 梯度 / 负载反馈偏置）作用在同一个偏置上正面对比，并用柱状图给出硬证据——**死专家的 aux 梯度精确等于 0** |
 | **⑧ 量化** | 对称 / 非对称 / NF4 三种编码、per-tensor / per-channel / group-wise 三种粒度，实时算 SQNR(dB)。可注入 40σ 离群值看它怎么把有效电平从 15 个打成 5 个，再验证 group-wise 能救回多少 dB。附 7B/70B 各精度显存账 |
 | **⑨ 长上下文外推** | 逐维画 RoPE 相位缠绕，直观看到「哪些维度在训练长度内就绕完了一圈」。对比 linear(PI) / NTK-aware / YaRN 在 32K 上的存活维度数、最小可分辨间隔、几何视野，讲清为什么 NTK 保住了高频、YaRN 按波长分段 |
+| **⑩ 从零训一个迷你 GPT** | **权重不模拟，当场训**：手写前向 + 反向 + AdamW，在 Web Worker 里把 1.86 万参数的字符级 GPT 从验证 loss 2.58 训到 0.014（约 30 秒，页面不卡）。可上传自定义语料，实时看 loss 曲线、同一起点的采样文本从乱码变像话、注意力从完美均匀（归一化熵 1.0000）塌成 one-hot（0.0000）。配参数量明细、每 token FLOPs、与 GPT-2/GPT-3 的数量级对比 |
 
-建议顺序：分词 → 嵌入与位置编码 → 多头注意力 → 采样生成 → KV Cache → 层间数据流 → MoE → 量化 → 长上下文外推。
-前六步是理解后面一切的地基；后三步是「把模型做大、做小、做长」的三条工程主线，也是当下面试最常被追问的部分。
+建议顺序：分词 → 嵌入与位置编码 → 多头注意力 → 采样生成 → KV Cache → 层间数据流 → MoE → 量化 → 长上下文外推 → 从零训一个。
+前六步是理解后面一切的地基；中间三步是「把模型做大、做小、做长」的工程主线，也是当下面试最常被追问的部分；
+最后一步把前面所有「被当作既定事实」的东西（学习率、warmup、初始化、梯度验证、窗口大小）变成要你自己负责的决策。
 
 ---
 
@@ -97,7 +100,7 @@ npm run dev          # http://127.0.0.1:5173
 
 ```bash
 npm run build        # 产物在 dist/，可直接静态托管
-npm test             # 215 个单测，全部纯函数，不碰网络
+npm test             # 242 个单测，全部纯函数，不碰网络
 npm run test:watch   # 开发时用
 npm run probe:model  # 探测 ONNX 输出签名（就是它证明了拿不到真实注意力）
 ```
@@ -109,7 +112,7 @@ npm run probe:model  # 探测 ONNX 输出签名（就是它证明了拿不到真
 
 ## 配套长文
 
-站点负责「看见」，长文负责「讲透」。每篇约 1500 字，配公式、类比、常见误解和动手实验清单。
+站点负责「看见」，长文负责「讲透」。每篇约 1500 字起，配公式、类比、常见误解和动手实验清单。
 **中英双语，章节编号一一对应。**
 
 | 文章 | 内容 |
@@ -120,8 +123,12 @@ npm run probe:model  # 探测 ONNX 输出签名（就是它证明了拿不到真
 | [04 · 采样](./docs/04-sampling.md) | 温度 vs top-p 的本质区别（改 logits 还是改支撑集）；低温度为什么会复读 |
 | [05 · KV Cache](./docs/05-kvcache.md) | O(m·n²) → O(n²+m·n) 的推导；**GQA 为什么是最划算的一刀**；prefill 与 decode 是两种负载 |
 | [06 · Transformer Block](./docs/06-transformer-block.md) | pre-norm vs post-norm；残差流视角；**FFN 才是参数大头与知识存储处** |
+| [07 · MoE 稀疏专家](./docs/07-moe.md) | 为什么专家会饿死；aux loss 与负载反馈偏置**不是一回事**；死专家梯度为什么精确为 0 |
+| [08 · 量化](./docs/08-quantization.md) | 把 16 位压成 4 位代价落在哪；离群值为什么专杀 per-tensor；group-wise 的上下限 |
+| [09 · 长上下文外推](./docs/09-context-extension.md) | 4K 训练为什么喂不动 32K（几何视野 27205）；PI / NTK / YaRN 各自的取舍 |
+| [10 · 从零训一个迷你 GPT](./docs/10-training.md) | **反向传播最容易写错的两处**；为什么 float32 不能用有限差分验证梯度；超参为什么不能从小模型搬到大模型；周期 vs 窗口的实测门槛；**注意力 one-hot 背后其实是查找表** |
 
-**English mirror**：[`docs/en/`](./docs/en/README.md)——九篇长文的完整英文版，可中英对着读。
+**English mirror**：[`docs/en/`](./docs/en/README.md)——十篇长文的完整英文版，可中英对着读。
 
 ---
 
@@ -207,8 +214,15 @@ per-id decode   = "注意力" "机制" "是" "大" "模型" "的核心"
   - 采样三个参数的实现与 HF `transformers` 的 logits warper 逻辑一致；
   - KV Cache 的复杂度是解析推导，可以直接和 profiler 对照；
   - 不同头呈现的模式（前一个 token / 句首 sink / 标点 / 内容相似 / 稀疏激发）是文献里反复观察到的典型行为。
+- **⑩ 是唯一的例外，而且是往"更真"的方向例外**：它的权重不模拟，是**当场训出来的** ——
+  手写的前向与反向、手写的 AdamW，每一步 loss 都真算。所以那个模块里的 loss 曲线、
+  采样文本、注意力热力图都是**一次真实训练运行的产物**，不是按公式画出来的示意图。
 
 **用它建立直觉是安全的，用它引用具体数值是不行的。**
+
+另外补一句关于「真实注意力热力图」：前面说过 ONNX 导出拿不到它（有实测证据），
+所以站点上的注意力热力图有两类 —— ③ 模块是**确定性模拟**（权重是人造的，算法是真的），
+⑩ 模块是**真实训练结果**（权重是真算的）。两类在界面上都标注清楚了。
 
 ---
 
@@ -218,7 +232,7 @@ per-id decode   = "注意力" "机制" "是" "大" "模型" "的核心"
 
 | 项目 | 侧重点 | 差异 |
 | --- | --- | --- |
-| [transformer-explainer](https://github.com/poloclub/transformer-explainer) | 浏览器内实时跑 GPT-2，聚焦单一模型的完整前向 | 它跑真实权重但只有一个模型、一条链路；本项目默认零下载、九个模块可拆开单独玩，且中英双语 |
+| [transformer-explainer](https://github.com/poloclub/transformer-explainer) | 浏览器内实时跑 GPT-2，聚焦单一模型的完整前向 | 它跑真实权重但只有一个模型、一条链路；本项目默认零下载、十个模块可拆开单独玩，且中英双语 |
 | [bbycroft/llm-viz](https://github.com/bbycroft/llm-viz) | 极细致的 3D 张量流动画 | 视觉震撼但需要跟着导览走；本项目偏向「每个参数都能拧、拧完立刻看到数字怎么变」 |
 | [rasbt/LLMs-from-scratch](https://github.com/rasbt/LLMs-from-scratch) | 从零用 PyTorch 实现并训练 | 它是「你要写代码」；本项目是「你不用写代码，但能看到每一步在算什么」，两者配合最好 |
 | [jalammar/ecco](https://github.com/jalammar/ecco) | Jupyter 内的可解释性分析 | 面向研究者；本项目面向学习者和面试准备，不需要 Python 环境 |
@@ -241,13 +255,17 @@ src/
 │   ├── sampling.ts       温度 / top-k / top-p 采样
 │   ├── kvcache.ts        KV Cache 的计算量与显存解析模型
 │   ├── realModel.ts      可选：浏览器内跑真实 ONNX 模型（真实 logits + KV 形状）
+│   ├── minigpt.ts        迷你字符级 GPT：手写前向 / 反向 / AdamW / 采样 / 注意力快照
+│   ├── trainProtocol.ts  主线程 ↔ 训练 Worker 的消息协议
 │   ├── exportImage.ts    零依赖的 DOM → PNG 导出（SVG foreignObject + 内联 CSS）
 │   ├── color.ts          热力图配色
 │   └── sharedModel.ts    全局共用的分词模型
+├── workers/
+│   └── trainWorker.ts    训练循环跑在 Web Worker 里，每 40ms 让出控制权（所以"暂停"点了立刻响应）
 ├── components/           通用 UI：滑块、分段选择、热力图、条形图、折线图、token 卡片、原理卡
 │   ├── RealModelPanel.tsx  真实模型面板（模型选择 / 镜像 / 真实分布表 / KV 实测）
 │   └── HeroDemo.tsx        首页流水线动图（由 core/ 的真实函数驱动，可暂停）
-├── modules/              九个教学模块（registry.ts 是注册表）
+├── modules/              十个教学模块（registry.ts 是注册表）
 ├── i18n/                 极简双语：Context + t()，common.ts 放跨模块文案
 ├── styles/global.css     全部样式，浅色主题 + 响应式
 └── App.tsx               侧边栏 + 内容区，无路由库
@@ -259,7 +277,7 @@ scripts/
 ├── verify-pages.mjs      线上部署验收：真实 Chrome 加载、双语切换、控制台错误、截图
 ├── verify-modules.mjs    线上模块验收：逐个切模块 + 点「导出图片」校验导出成功
 └── make-gif.py           把帧拼成 docs/demo.gif（需 Pillow）
-docs/                     九篇配套长文（中文） + en/（英文版）
+docs/                     十篇配套长文（中文） + en/（英文版）
 .github/workflows/        GitHub Pages 自动部署
 ```
 
@@ -270,7 +288,7 @@ docs/                     九篇配套长文（中文） + en/（英文版）
 ## 测试
 
 ```bash
-npm test              # 215 个单测，全部纯函数，不碰网络
+npm test              # 242 个单测，全部纯函数，不碰网络
 
 # 端到端（会真的下 129 MB 权重，默认跳过）
 REAL_MODEL_TEST=1 npm test
@@ -280,6 +298,12 @@ REAL_MODEL_TEST=1 REAL_MODEL_ID=onnx-community/Qwen3-0.6B-ONNX npm test
 `core/` 全部是纯函数，所以能脱离浏览器直接断言：BPE 的无损性与可复现性、采样三个参数的
 数学性质（温度不改排序、top-p 取最小跨阈候选集、低温退化为贪心）、真实模型的标签对齐与
 数值稳定性、导出工具的尺寸上限与文件名净化。上面那张「四个坑」表里的每一条都有对应的回归测试。
+
+模块⑩ 的测试值得单独说一句：**手写反向的正确性不能靠"loss 有没有降"来判断**
+（残差路径漏一条、LayerNorm 少乘一个 `1/σ`，loss 都会照样降）。所以这里用的是
+**下降方向判据** —— 沿 `−g` 走一小步，实际下降量应等于 `η·|g|²`，实测比值 1 层 0.983、
+2 层 0.964。逐参数有限差分在 float32 里是**不可用**的：我们试过，它报了 48 处失配，
+全是前向舍入噪声造成的假阳性。
 
 ---
 
@@ -341,7 +365,7 @@ REAL_MODEL_TEST=1 REAL_MODEL_ID=onnx-community/Qwen3-0.6B-ONNX npm test
   author = {1690940255ran-dot},
   year   = {2026},
   url    = {https://github.com/1690940255ran-dot/llm-inside-lab},
-  note   = {纯前端、中英双语的大语言模型内部机制交互可视化；九个模块 + 十八篇配套长文}
+  note   = {纯前端、中英双语的大语言模型内部机制交互可视化；十个模块 + 二十篇配套长文}
 }
 ```
 
@@ -373,7 +397,9 @@ REAL_MODEL_TEST=1 REAL_MODEL_ID=onnx-community/Qwen3-0.6B-ONNX npm test
       直接作用在真实 logits 上，顺带读出 KV Cache 的实测张量形状
 - [x] v0.9 三个新模块：MoE 稀疏专家 / 量化 / 长上下文外推（`core/moe.ts` `core/quant.ts` `core/context.ts`）
       + 三篇配套长文（中/英），单测 117 → 215
-- [ ] v1.0 自定义语料上传 + 迷你模型训练可视化
+- [x] v1.0 自定义语料上传 + 迷你模型训练可视化（`core/minigpt.ts` `workers/trainWorker.ts`）
+      —— 浏览器里真的训练：手写前向 / 反向 / AdamW，1.86 万参数从验证 loss 2.58 到 0.014
+      + 第十篇配套长文（中/英），单测 215 → 242
 
 ## License
 

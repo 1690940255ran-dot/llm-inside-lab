@@ -4,20 +4,20 @@
 
 [English](./README_EN.md) · [简体中文](./README.md)
 
-Frontend only · no paid APIs · bilingual (中文 / EN) · responsive · nine playable modules · optional real model weights
+Frontend only · no paid APIs · bilingual (中文 / EN) · responsive · ten playable modules · optional real model weights · optionally train a mini GPT right in the browser
 
 ![Node](https://img.shields.io/badge/node-%E2%89%A518-339933)
 ![React](https://img.shields.io/badge/react-18-61dafb)
 ![TS](https://img.shields.io/badge/typescript-5-3178c6)
-![tests](https://img.shields.io/badge/tests-215%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-242%20passing-brightgreen)
 ![i18n](https://img.shields.io/badge/i18n-%E4%B8%AD%2FEN-blue)
-![docs](https://img.shields.io/badge/docs-ZH%2FEN%20%C3%979-orange)
+![docs](https://img.shields.io/badge/docs-ZH%2FEN%20%C3%9710-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ![stars](https://img.shields.io/github/stars/1690940255ran-dot/llm-inside-lab?style=flat&label=stars&color=yellow)
 ![last commit](https://img.shields.io/github/last-commit/1690940255ran-dot/llm-inside-lab?style=flat)
 ![deploy](https://github.com/1690940255ran-dot/llm-inside-lab/actions/workflows/deploy.yml/badge.svg)
-![bundle](https://img.shields.io/badge/bundle-101%20kB%20gzip-blueviolet)
+![bundle](https://img.shields.io/badge/bundle-143%20kB%20gzip-blueviolet)
 
 ---
 
@@ -55,15 +55,16 @@ the input and watch everything recompute live**:
 | | |
 | --- | --- |
 | **The algorithms are real, not drawn** | BPE merges are counted from actual corpus frequencies; attention runs the full Q/K/V projection → `1/√d_k` scaling → causal mask → softmax; the three sampling knobs match Hugging Face's logits warpers |
+| **The weights can also be trained on the spot** | Module ⑩ is the one place where the weights are not simulated: a hand-written forward pass, hand-written backward pass and hand-written AdamW genuinely drive the validation loss from 2.5834 to 0.0137 in a Web Worker. Gradient correctness is verified with a **descent-direction criterion** (per-parameter finite differences are unusable in float32 — we hit that trap) |
 | **Optional real weights** | Run SmolLM2 / LFM2 / Qwen3 in your browser (WebGPU, WASM fallback) so temperature / top-k / top-p act on **real logits**, and read the measured KV-cache tensor shapes |
-| **Honest about what is simulated** | The homepage and every module state which parts are simulated and which are real. Where something is genuinely impossible in a browser (real attention maps), the site shows the measurement that proves it |
-| **No UI or charting library** | Heatmaps are `<table>`, line charts are SVG, PNG export is hand-rolled (`core/exportImage.ts`). Main bundle: 133 kB gzip |
-| **215 unit tests** | `core/` is pure functions, so it can be asserted without a browser. Every bug we hit has a regression test |
-| **Bilingual** | UI in Chinese and English; the nine companion essays have full English versions with matching section numbers |
+| **Honest about what is simulated** | The homepage and every module state which parts are simulated and which are real. Where something is genuinely impossible in a browser (real attention maps), the site shows the measurement that proves it — and when training fails, it says so (measured: 2 of 8 seeds fail) |
+| **No UI or charting library** | Heatmaps are `<table>`, line charts are SVG, PNG export is hand-rolled (`core/exportImage.ts`). Main bundle: 143 kB gzip |
+| **242 unit tests** | `core/` is pure functions, so it can be asserted without a browser. Every bug we hit has a regression test |
+| **Bilingual** | UI in Chinese and English; the ten companion essays have full English versions with matching section numbers |
 
 ---
 
-## The nine modules
+## The ten modules
 
 Every module's main visual card has an "Export PNG" button in its header — a 2x PNG generated locally in
 your browser. Grab it straight into slides or notes.
@@ -79,10 +80,12 @@ your browser. Grab it straight into slides or notes.
 | **⑦ Mixture of Experts** | Routing is **actually trained**: a k-means-style update lets experts grow their own division of labour. The root cause of load skew (a Zipf data prior) and the two remedies (aux-loss gradient vs load-feedback bias) act on the same bias parameter and are compared head to head, with a bar chart as hard evidence — **a dead expert's aux gradient is exactly zero** |
 | **⑧ Quantization** | Symmetric / asymmetric / NF4 codebooks at per-tensor / per-channel / group-wise granularity, with SQNR in dB computed live. Inject a 40σ outlier and watch it crush the effective level count from 15 to 5, then check how many dB group-wise granularity buys back. Includes a 7B/70B memory ledger across precisions |
 | **⑨ Long-context Extension** | Per-dimension RoPE phase wrapping, so you can see which dimensions complete a full turn *within* the training length. Compares linear (PI) / NTK-aware / YaRN at 32K on surviving dimensions, minimum resolvable gap and geometric horizon — and explains why NTK preserves high frequencies while YaRN ramps by wavelength |
+| **⑩ Train a mini GPT from scratch** | **No simulated weights — train them here**: a hand-written forward pass, backward pass and AdamW take an 18.6k-parameter character-level GPT from validation loss 2.58 to 0.014 in a Web Worker (about 30 seconds, page stays responsive). Upload your own corpus and watch the loss curve, sampled text go from gibberish to real sentences, and attention collapse from perfectly uniform (normalised entropy 1.0000) to one-hot (0.0000). Includes a parameter breakdown, FLOPs per token, and an order-of-magnitude comparison against GPT-2 / GPT-3 |
 
-Suggested order: Tokenizer → Embeddings → Attention → Sampling → KV Cache → Block flow → MoE → Quantization → Context extension.
-The first three are the foundation; the last three cover how a trained model is actually used to generate —
-which is what engineering interviews love to ask.
+Suggested order: Tokenizer → Embeddings → Attention → Sampling → KV Cache → Block flow → MoE → Quantization → Context extension → Training from scratch.
+The first six are the foundation; the middle three are the engineering through-lines of "bigger, smaller, longer",
+which is what interviews love to ask about; the last one turns everything the earlier modules treat as given
+(learning rate, warmup, initialisation, gradient validation, window size) into decisions you have to own.
 
 ---
 
@@ -101,7 +104,7 @@ Other commands:
 
 ```bash
 npm run build        # output in dist/, ready for static hosting
-npm test             # 215 unit tests, pure functions only, no network
+npm test             # 242 unit tests, pure functions only, no network
 npm run test:watch   # while developing
 npm run probe:model  # dump ONNX output signatures (this is what proves real attention is unavailable)
 ```
@@ -113,7 +116,7 @@ To regenerate the homepage GIF: `npm run capture:hero` (captures frames) then `n
 
 ## Companion essays
 
-The site is for *seeing*; the essays are for *explaining*. Each is ~1,500 words with formulas, analogies,
+The site is for *seeing*; the essays are for *explaining*. Each is ~1,500 words and up, with formulas, analogies,
 common misconceptions and a hands-on checklist. **Bilingual, with matching section numbers.**
 
 | Article | Contents |
@@ -124,6 +127,10 @@ common misconceptions and a hands-on checklist. **Bilingual, with matching secti
 | [04 · Sampling](./docs/en/04-sampling.md) | Temperature vs top-p (logits vs support set); why low temperature loops |
 | [05 · KV Cache](./docs/en/05-kvcache.md) | The O(m·n²) → O(n²+m·n) derivation; **why GQA is the best value cut**; prefill and decode are different workloads |
 | [06 · Transformer Block](./docs/en/06-transformer-block.md) | pre-norm vs post-norm; the residual-stream view; **the FFN is where the parameters and the knowledge live** |
+| [07 · Mixture of Experts](./docs/en/07-moe.md) | Why experts starve; why the aux loss and the load-feedback bias are **not** the same thing; why a dead expert's gradient is exactly zero |
+| [08 · Quantization](./docs/en/08-quantization.md) | Where the cost of 16 bits → 4 bits lands; why outliers specifically kill per-tensor; the floor and ceiling on group size |
+| [09 · Long-context Extension](./docs/en/09-context-extension.md) | Why 4K training cannot serve 32K (geometric horizon 27205); the trade-offs of PI / NTK / YaRN |
+| [10 · Training from Scratch](./docs/en/10-training.md) | **The two places backprop most easily goes wrong**; why float32 cannot be validated with finite differences; why large-model hyperparameters do not transfer down; the measured period-vs-window threshold; **why one-hot attention is really a lookup table** |
 
 中文版见 [`docs/`](./docs/README.md)。
 
@@ -197,8 +204,17 @@ The project's most important trade-off, stated on the homepage and repeated here
   - the KV-cache complexity is a closed-form derivation you can check against a profiler
   - the head patterns (previous token / first-token sink / delimiter / content matching / sparse induction)
     are the ones repeatedly reported in the literature
+- **⑩ is the one exception, and it is an exception in the "more real" direction**: its weights are not
+  simulated — they are **trained on the spot**, with a hand-written forward pass, backward pass and AdamW,
+  every loss value genuinely computed. So the loss curve, the sampled text and the attention heatmaps in that
+  module are the output of **an actual training run**, not a diagram drawn from a formula.
 
 **Safe for building intuition. Not safe for quoting specific numbers.**
+
+One clarification on "real attention heatmaps": as noted above, an ONNX export cannot provide them (with
+evidence). So there are two kinds of attention heatmap on the site — module ③ is a **deterministic
+simulation** (built weights, real algorithm), and module ⑩ is a **real training result**. Both are labelled
+as such in the UI.
 
 ---
 
@@ -209,7 +225,7 @@ There are excellent projects in this space. This one is positioned as
 
 | Project | Focus | Difference |
 | --- | --- | --- |
-| [transformer-explainer](https://github.com/poloclub/transformer-explainer) | Runs GPT-2 live in the browser, one model end-to-end | It uses real weights but offers a single model and a single path; this project downloads nothing by default and lets you open each of nine modules separately, in two languages |
+| [transformer-explainer](https://github.com/poloclub/transformer-explainer) | Runs GPT-2 live in the browser, one model end-to-end | It uses real weights but offers a single model and a single path; this project downloads nothing by default and lets you open each of ten modules separately, in two languages |
 | [bbycroft/llm-viz](https://github.com/bbycroft/llm-viz) | Extremely detailed 3D tensor-flow animation | Visually stunning but you follow a guided tour; this one is about "twist any knob and watch the numbers move" |
 | [rasbt/LLMs-from-scratch](https://github.com/rasbt/LLMs-from-scratch) | Implement and train an LLM in PyTorch | That one is "you write code"; this one is "you write no code but see every step". They pair well |
 | [jalammar/ecco](https://github.com/jalammar/ecco) | Interpretability analysis in Jupyter | Aimed at researchers; this one targets learners and interview prep, no Python needed |
@@ -233,13 +249,13 @@ src/
 │   ├── exportImage.ts    dependency-free DOM → PNG export
 │   └── ...
 ├── components/           shared UI: sliders, segmented control, heatmap, bar list, line chart, principle card
-├── modules/              the nine teaching modules (registry.ts is the registry)
+├── modules/              the ten teaching modules (registry.ts is the registry)
 ├── i18n/                 minimal bilingual layer: Context + t()
 ├── styles/global.css     all styles, light theme, responsive
 └── App.tsx               sidebar + content, no router library
 tests/                    vitest unit tests + optional end-to-end integration
 scripts/                  ONNX probes, hero frame capture, GIF assembly
-docs/                     nine essays (中文) + en/ (English)
+docs/                     ten essays (中文) + en/ (English)
 ```
 
 **Adding a module takes two steps**: write the component in `src/modules/<name>/`, then add one entry to
@@ -250,7 +266,7 @@ docs/                     nine essays (中文) + en/ (English)
 ## Tests
 
 ```bash
-npm test              # 215 unit tests, pure functions only, no network
+npm test              # 242 unit tests, pure functions only, no network
 
 # end-to-end (downloads 129 MB of weights, skipped by default)
 REAL_MODEL_TEST=1 npm test
@@ -323,7 +339,7 @@ Please run `npm test` and `npm run build` before opening a PR.
   author = {1690940255ran-dot},
   year   = {2026},
   url    = {https://github.com/1690940255ran-dot/llm-inside-lab},
-  note   = {Frontend-only, bilingual interactive visualization of LLM internals; nine modules + eighteen essays}
+  note   = {Frontend-only, bilingual interactive visualization of LLM internals; ten modules + twenty essays}
 }
 ```
 
@@ -355,7 +371,9 @@ Each essay ends with the classic papers for its topic — see [`docs/en/`](./doc
       acting on real logits, plus measured KV-cache tensor shapes
 - [x] v0.9 Three new modules — MoE, quantization, long-context extension (`core/moe.ts`, `core/quant.ts`,
       `core/context.ts`) — plus their three companion essays in both languages; unit tests went 117 → 215
-- [ ] v1.0 Custom corpus upload + mini training-run visualization
+- [x] v1.0 Custom corpus upload + mini training-run visualization (`core/minigpt.ts`, `workers/trainWorker.ts`)
+      — genuinely training in the browser: hand-written forward / backward / AdamW, 18.6k parameters from
+      validation loss 2.58 to 0.014 — plus the tenth companion essay in both languages; unit tests went 215 → 242
 
 ## License
 

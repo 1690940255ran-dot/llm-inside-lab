@@ -1,7 +1,7 @@
 {
   "name": "llm-inside-lab",
   "private": true,
-  "version": "0.9.0",
+  "version": "1.0.0",
   "type": "module",
   "description": "LLM 内部机制可视化交互实验室 —— 纯前端、中文、可交互地拆解大模型原理",
   "scripts": {

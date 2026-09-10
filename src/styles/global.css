@@ -418,6 +418,48 @@ input[type='range'] {
   gap: 3px;
 }
 
+/* ---------- ⑩ 训练模块 ---------- */
+
+/* 左右并排：训练前 vs 训练后的注意力对照 */
+.two-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+/* 采样文本列表：每行一个检查点 */
+.sample-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.sample-row {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 10px;
+  align-items: baseline;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+}
+
+.sample-row .k {
+  font-size: 11px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.sample-row .v {
+  font-family: var(--mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.7;
+  word-break: break-all;
+}
+
 /* ---------- token 卡片 ---------- */
 .token {
   display: inline-flex;

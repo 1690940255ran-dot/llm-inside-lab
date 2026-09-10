@@ -13,6 +13,7 @@ import { FlowModule } from './flow/FlowModule'
 import { MoEModule } from './moe/MoEModule'
 import { QuantModule } from './quant/QuantModule'
 import { ContextModule } from './context/ContextModule'
+import { TrainModule } from './train/TrainModule'
 
 export interface ModuleMeta {
   id: string
@@ -133,5 +134,17 @@ export const MODULES: ModuleMeta[] = [
     blurb: '相位缠绕、别名、期望注意力分数，以及 linear / NTK / YaRN 三种改写各自的代价。',
     blurbEn:
       'Phase wrapping, aliasing, the expected attention score, and what linear / NTK / YaRN each trade away.',
+  },
+  {
+    id: 'train',
+    name: '⑩ 从零训练迷你 GPT',
+    sub: '真的跑反向传播',
+    nameEn: '⑩ Train a Mini GPT',
+    subEn: 'real backprop, in your browser',
+    status: 'done',
+    Component: TrainModule,
+    blurb: '从随机权重开始，在浏览器里真的训一个一万八千参数的 GPT：看 loss 真的降下去，注意力真的长出结构。',
+    blurbEn:
+      'Start from random weights and actually train an 18.6k-parameter GPT in your browser: the loss really falls, and attention really grows structure.',
   },
 ]
