@@ -13,6 +13,8 @@ export function LineChart(props: {
   height?: number
   yFormat?: (v: number) => string
   xFormat?: (v: number) => string
+  /** 纵轴下界，默认 0。像 RoPE 期望内积这种会取负值的量要传 -1 */
+  yMin?: number
 }) {
   const W = 620
   const H = props.height ?? 260
@@ -27,7 +29,7 @@ export function LineChart(props: {
 
   const xMin = Math.min(...allX)
   const xMax = Math.max(...allX)
-  const yMin = 0
+  const yMin = props.yMin ?? 0
   const yMax = Math.max(...allY) || 1
 
   const sx = (x: number) => padL + ((x - xMin) / (xMax - xMin || 1)) * (W - padL - padR)

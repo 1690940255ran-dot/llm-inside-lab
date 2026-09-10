@@ -4,14 +4,14 @@
 
 [English](./README_EN.md) · [简体中文](./README.md)
 
-Frontend only · no paid APIs · bilingual (中文 / EN) · responsive · six playable modules · optional real model weights
+Frontend only · no paid APIs · bilingual (中文 / EN) · responsive · nine playable modules · optional real model weights
 
 ![Node](https://img.shields.io/badge/node-%E2%89%A518-339933)
 ![React](https://img.shields.io/badge/react-18-61dafb)
 ![TS](https://img.shields.io/badge/typescript-5-3178c6)
-![tests](https://img.shields.io/badge/tests-117%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-215%20passing-brightgreen)
 ![i18n](https://img.shields.io/badge/i18n-%E4%B8%AD%2FEN-blue)
-![docs](https://img.shields.io/badge/docs-ZH%2FEN%20%C3%976-orange)
+![docs](https://img.shields.io/badge/docs-ZH%2FEN%20%C3%979-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ![stars](https://img.shields.io/github/stars/1690940255ran-dot/llm-inside-lab?style=flat&label=stars&color=yellow)
@@ -57,13 +57,13 @@ the input and watch everything recompute live**:
 | **The algorithms are real, not drawn** | BPE merges are counted from actual corpus frequencies; attention runs the full Q/K/V projection → `1/√d_k` scaling → causal mask → softmax; the three sampling knobs match Hugging Face's logits warpers |
 | **Optional real weights** | Run SmolLM2 / LFM2 / Qwen3 in your browser (WebGPU, WASM fallback) so temperature / top-k / top-p act on **real logits**, and read the measured KV-cache tensor shapes |
 | **Honest about what is simulated** | The homepage and every module state which parts are simulated and which are real. Where something is genuinely impossible in a browser (real attention maps), the site shows the measurement that proves it |
-| **No UI or charting library** | Heatmaps are `<table>`, line charts are SVG, PNG export is hand-rolled (`core/exportImage.ts`). Main bundle: 101 kB gzip |
-| **117 unit tests** | `core/` is pure functions, so it can be asserted without a browser. Every bug we hit has a regression test |
-| **Bilingual** | UI in Chinese and English; the six companion essays have full English versions with matching section numbers |
+| **No UI or charting library** | Heatmaps are `<table>`, line charts are SVG, PNG export is hand-rolled (`core/exportImage.ts`). Main bundle: 133 kB gzip |
+| **215 unit tests** | `core/` is pure functions, so it can be asserted without a browser. Every bug we hit has a regression test |
+| **Bilingual** | UI in Chinese and English; the nine companion essays have full English versions with matching section numbers |
 
 ---
 
-## The six modules
+## The nine modules
 
 Every module's main visual card has an "Export PNG" button in its header — a 2x PNG generated locally in
 your browser. Grab it straight into slides or notes.
@@ -76,8 +76,11 @@ your browser. Grab it straight into slides or notes.
 | **④ Token-by-token Generation** | Every step before the draw, laid open: raw p → temperature → top-k → top-p → what got picked. **Optional real model** so the same knobs act on real logits |
 | **⑤ KV Cache** | Quantifies FLOPs saved and memory paid, with GQA / batch size / precision curves |
 | **⑥ Block Data Flow** | Step-by-step animation through one block (LN → Attn → residual → LN → FFN → residual), with state heatmap, residual contribution and layer similarity |
+| **⑦ Mixture of Experts** | Routing is **actually trained**: a k-means-style update lets experts grow their own division of labour. The root cause of load skew (a Zipf data prior) and the two remedies (aux-loss gradient vs load-feedback bias) act on the same bias parameter and are compared head to head, with a bar chart as hard evidence — **a dead expert's aux gradient is exactly zero** |
+| **⑧ Quantization** | Symmetric / asymmetric / NF4 codebooks at per-tensor / per-channel / group-wise granularity, with SQNR in dB computed live. Inject a 40σ outlier and watch it crush the effective level count from 15 to 5, then check how many dB group-wise granularity buys back. Includes a 7B/70B memory ledger across precisions |
+| **⑨ Long-context Extension** | Per-dimension RoPE phase wrapping, so you can see which dimensions complete a full turn *within* the training length. Compares linear (PI) / NTK-aware / YaRN at 32K on surviving dimensions, minimum resolvable gap and geometric horizon — and explains why NTK preserves high frequencies while YaRN ramps by wavelength |
 
-Suggested order: Tokenizer → Embeddings → Attention → Sampling → KV Cache → Block flow.
+Suggested order: Tokenizer → Embeddings → Attention → Sampling → KV Cache → Block flow → MoE → Quantization → Context extension.
 The first three are the foundation; the last three cover how a trained model is actually used to generate —
 which is what engineering interviews love to ask.
 
@@ -98,7 +101,7 @@ Other commands:
 
 ```bash
 npm run build        # output in dist/, ready for static hosting
-npm test             # 117 unit tests, pure functions only, no network
+npm test             # 215 unit tests, pure functions only, no network
 npm run test:watch   # while developing
 npm run probe:model  # dump ONNX output signatures (this is what proves real attention is unavailable)
 ```
@@ -206,7 +209,7 @@ There are excellent projects in this space. This one is positioned as
 
 | Project | Focus | Difference |
 | --- | --- | --- |
-| [transformer-explainer](https://github.com/poloclub/transformer-explainer) | Runs GPT-2 live in the browser, one model end-to-end | It uses real weights but offers a single model and a single path; this project downloads nothing by default and lets you open each of six modules separately, in two languages |
+| [transformer-explainer](https://github.com/poloclub/transformer-explainer) | Runs GPT-2 live in the browser, one model end-to-end | It uses real weights but offers a single model and a single path; this project downloads nothing by default and lets you open each of nine modules separately, in two languages |
 | [bbycroft/llm-viz](https://github.com/bbycroft/llm-viz) | Extremely detailed 3D tensor-flow animation | Visually stunning but you follow a guided tour; this one is about "twist any knob and watch the numbers move" |
 | [rasbt/LLMs-from-scratch](https://github.com/rasbt/LLMs-from-scratch) | Implement and train an LLM in PyTorch | That one is "you write code"; this one is "you write no code but see every step". They pair well |
 | [jalammar/ecco](https://github.com/jalammar/ecco) | Interpretability analysis in Jupyter | Aimed at researchers; this one targets learners and interview prep, no Python needed |
@@ -230,13 +233,13 @@ src/
 │   ├── exportImage.ts    dependency-free DOM → PNG export
 │   └── ...
 ├── components/           shared UI: sliders, segmented control, heatmap, bar list, line chart, principle card
-├── modules/              the six teaching modules (registry.ts is the registry)
+├── modules/              the nine teaching modules (registry.ts is the registry)
 ├── i18n/                 minimal bilingual layer: Context + t()
 ├── styles/global.css     all styles, light theme, responsive
 └── App.tsx               sidebar + content, no router library
 tests/                    vitest unit tests + optional end-to-end integration
 scripts/                  ONNX probes, hero frame capture, GIF assembly
-docs/                     six essays (中文) + en/ (English)
+docs/                     nine essays (中文) + en/ (English)
 ```
 
 **Adding a module takes two steps**: write the component in `src/modules/<name>/`, then add one entry to
@@ -247,7 +250,7 @@ docs/                     six essays (中文) + en/ (English)
 ## Tests
 
 ```bash
-npm test              # 117 unit tests, pure functions only, no network
+npm test              # 215 unit tests, pure functions only, no network
 
 # end-to-end (downloads 129 MB of weights, skipped by default)
 REAL_MODEL_TEST=1 npm test
@@ -320,7 +323,7 @@ Please run `npm test` and `npm run build` before opening a PR.
   author = {1690940255ran-dot},
   year   = {2026},
   url    = {https://github.com/1690940255ran-dot/llm-inside-lab},
-  note   = {Frontend-only, bilingual interactive visualization of LLM internals; six modules + twelve essays}
+  note   = {Frontend-only, bilingual interactive visualization of LLM internals; nine modules + eighteen essays}
 }
 ```
 
@@ -350,7 +353,8 @@ Each essay ends with the classic papers for its topic — see [`docs/en/`](./doc
 - [x] v0.7 English versions of all six essays (`docs/en/`)
 - [x] v0.8 Sampling module on real model weights — real next-token distribution, temperature / top-k / top-p
       acting on real logits, plus measured KV-cache tensor shapes
-- [ ] v0.9 New modules: MoE, quantization, long-context extrapolation
+- [x] v0.9 Three new modules — MoE, quantization, long-context extension (`core/moe.ts`, `core/quant.ts`,
+      `core/context.ts`) — plus their three companion essays in both languages; unit tests went 117 → 215
 - [ ] v1.0 Custom corpus upload + mini training-run visualization
 
 ## License

@@ -4,20 +4,20 @@
 
 [English](./README_EN.md) · 简体中文
 
-纯前端 · 零付费依赖 · 中英双语 · 响应式 · 六个模块全部可玩 · 可选加载真实模型权重
+纯前端 · 零付费依赖 · 中英双语 · 响应式 · 九个模块全部可玩 · 可选加载真实模型权重
 
 ![Node](https://img.shields.io/badge/node-%E2%89%A518-339933)
 ![React](https://img.shields.io/badge/react-18-61dafb)
 ![TS](https://img.shields.io/badge/typescript-5-3178c6)
-![tests](https://img.shields.io/badge/tests-117%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-215%20passing-brightgreen)
 ![i18n](https://img.shields.io/badge/i18n-%E4%B8%AD%2FEN-blue)
-![docs](https://img.shields.io/badge/docs-%E4%B8%AD%2FEN%20%C3%976-orange)
+![docs](https://img.shields.io/badge/docs-%E4%B8%AD%2FEN%20%C3%979-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ![stars](https://img.shields.io/github/stars/1690940255ran-dot/llm-inside-lab?style=flat&label=stars&color=yellow)
 ![last commit](https://img.shields.io/github/last-commit/1690940255ran-dot/llm-inside-lab?style=flat)
 ![deploy](https://github.com/1690940255ran-dot/llm-inside-lab/actions/workflows/deploy.yml/badge.svg)
-![bundle](https://img.shields.io/badge/bundle-101%20kB%20gzip-blueviolet)
+![bundle](https://img.shields.io/badge/bundle-133%20kB%20gzip-blueviolet)
 
 ---
 
@@ -54,13 +54,13 @@
 | **算法是真的，不是画出来的** | BPE 合并表真从语料频次里数出来；注意力走完整的 Q/K/V 投影 → `/√d_k` 缩放 → 因果掩码 → softmax；采样三参数与 HF `transformers` 的 logits warper 逻辑一致 |
 | **可选跑真实模型** | 浏览器内（WebGPU / WASM）真跑 SmolLM2 / LFM2 / Qwen3，把温度 / top-k / top-p 直接作用在**真实 logits** 上，顺带读出 KV Cache 的实测张量形状 |
 | **不骗人** | 哪里是模拟、哪里是真算，首页和每个模块都写清楚；拿不到的东西（真实注意力热力图）直接贴出实测证据说明为什么拿不到 |
-| **零 UI / 图表库** | 热力图用 `<table>`、折线图用 SVG、导出 PNG 自己实现（`core/exportImage.ts`），主包 101 kB gzip |
-| **117 个单测** | `core/` 全纯函数，可脱离浏览器断言；踩过的每个坑都有回归测试 |
-| **中英双语** | 界面双语，六篇配套长文也有完整英文版，章节一一对应 |
+| **零 UI / 图表库** | 热力图用 `<table>`、折线图用 SVG、导出 PNG 自己实现（`core/exportImage.ts`），主包 133 kB gzip |
+| **215 个单测** | `core/` 全纯函数，可脱离浏览器断言；踩过的每个坑都有回归测试 |
+| **中英双语** | 界面双语，九篇配套长文也有完整英文版，章节一一对应 |
 
 ---
 
-## 六个模块
+## 九个模块
 
 每个模块的主视觉卡片右上角都有「导出图片」按钮，一键导出 2 倍 PNG（纯浏览器本地生成）。
 做 PPT / 笔记 / 汇报直接拿图。
@@ -73,9 +73,12 @@
 | **④ 逐 token 生成与采样** | 把抽签前的每一步摊开：原始 p → 温度 → top-k → top-p → 抽中谁，被截断的候选整行灰掉。**可选加载真实模型**，让同样的旋钮作用在真实 logits 上 |
 | **⑤ KV Cache 加速** | 量化「省了多少 FLOPs、付了多少显存」，含 GQA、batch、精度三个维度的影响曲线 |
 | **⑥ Transformer 层间数据流** | 可逐子步推进的 Block 结构动画（LN→Attn→残差→LN→FFN→残差），配表示热图、残差贡献、层间相似度 |
+| **⑦ 稀疏专家 MoE** | 路由是**真的训出来的**：k-means 式专精更新让专家自己长出分工。负载倾斜的根源（Zipf 数据先验）与两条治法（aux loss 梯度 / 负载反馈偏置）作用在同一个偏置上正面对比，并用柱状图给出硬证据——**死专家的 aux 梯度精确等于 0** |
+| **⑧ 量化** | 对称 / 非对称 / NF4 三种编码、per-tensor / per-channel / group-wise 三种粒度，实时算 SQNR(dB)。可注入 40σ 离群值看它怎么把有效电平从 15 个打成 5 个，再验证 group-wise 能救回多少 dB。附 7B/70B 各精度显存账 |
+| **⑨ 长上下文外推** | 逐维画 RoPE 相位缠绕，直观看到「哪些维度在训练长度内就绕完了一圈」。对比 linear(PI) / NTK-aware / YaRN 在 32K 上的存活维度数、最小可分辨间隔、几何视野，讲清为什么 NTK 保住了高频、YaRN 按波长分段 |
 
-建议顺序：分词 → 嵌入与位置编码 → 多头注意力 → 采样生成 → KV Cache → 层间数据流。
-前三步是理解后面一切的地基；后三步是「训练好的模型怎么被用来生成」，也是工程面试最爱问的部分。
+建议顺序：分词 → 嵌入与位置编码 → 多头注意力 → 采样生成 → KV Cache → 层间数据流 → MoE → 量化 → 长上下文外推。
+前六步是理解后面一切的地基；后三步是「把模型做大、做小、做长」的三条工程主线，也是当下面试最常被追问的部分。
 
 ---
 
@@ -94,7 +97,7 @@ npm run dev          # http://127.0.0.1:5173
 
 ```bash
 npm run build        # 产物在 dist/，可直接静态托管
-npm test             # 117 个单测，全部纯函数，不碰网络
+npm test             # 215 个单测，全部纯函数，不碰网络
 npm run test:watch   # 开发时用
 npm run probe:model  # 探测 ONNX 输出签名（就是它证明了拿不到真实注意力）
 ```
@@ -118,7 +121,7 @@ npm run probe:model  # 探测 ONNX 输出签名（就是它证明了拿不到真
 | [05 · KV Cache](./docs/05-kvcache.md) | O(m·n²) → O(n²+m·n) 的推导；**GQA 为什么是最划算的一刀**；prefill 与 decode 是两种负载 |
 | [06 · Transformer Block](./docs/06-transformer-block.md) | pre-norm vs post-norm；残差流视角；**FFN 才是参数大头与知识存储处** |
 
-**English mirror**：[`docs/en/`](./docs/en/README.md)——六篇长文的完整英文版，可中英对着读。
+**English mirror**：[`docs/en/`](./docs/en/README.md)——九篇长文的完整英文版，可中英对着读。
 
 ---
 
@@ -140,7 +143,7 @@ npm run probe:model  # 探测 ONNX 输出签名（就是它证明了拿不到真
 
 要点：
 
-- **动态 import**，不加载就不会下载这部分代码（主包 101 kB gzip，transformers 单独分片）
+- **动态 import**，不加载就不会下载这部分代码（主包 133 kB gzip，transformers 单独分片）
 - **全程本地推理**，文本不会发到任何服务器
 - **镜像可配**：默认 `https://hf-mirror.com`，国外网络可改回 `https://huggingface.co`
 - **静态托管自动锁单线程**：GitHub Pages 不发 COOP/COEP 响应头 → 拿不到 `SharedArrayBuffer`
@@ -215,7 +218,7 @@ per-id decode   = "注意力" "机制" "是" "大" "模型" "的核心"
 
 | 项目 | 侧重点 | 差异 |
 | --- | --- | --- |
-| [transformer-explainer](https://github.com/poloclub/transformer-explainer) | 浏览器内实时跑 GPT-2，聚焦单一模型的完整前向 | 它跑真实权重但只有一个模型、一条链路；本项目默认零下载、六个模块可拆开单独玩，且中英双语 |
+| [transformer-explainer](https://github.com/poloclub/transformer-explainer) | 浏览器内实时跑 GPT-2，聚焦单一模型的完整前向 | 它跑真实权重但只有一个模型、一条链路；本项目默认零下载、九个模块可拆开单独玩，且中英双语 |
 | [bbycroft/llm-viz](https://github.com/bbycroft/llm-viz) | 极细致的 3D 张量流动画 | 视觉震撼但需要跟着导览走；本项目偏向「每个参数都能拧、拧完立刻看到数字怎么变」 |
 | [rasbt/LLMs-from-scratch](https://github.com/rasbt/LLMs-from-scratch) | 从零用 PyTorch 实现并训练 | 它是「你要写代码」；本项目是「你不用写代码，但能看到每一步在算什么」，两者配合最好 |
 | [jalammar/ecco](https://github.com/jalammar/ecco) | Jupyter 内的可解释性分析 | 面向研究者；本项目面向学习者和面试准备，不需要 Python 环境 |
@@ -244,7 +247,7 @@ src/
 ├── components/           通用 UI：滑块、分段选择、热力图、条形图、折线图、token 卡片、原理卡
 │   ├── RealModelPanel.tsx  真实模型面板（模型选择 / 镜像 / 真实分布表 / KV 实测）
 │   └── HeroDemo.tsx        首页流水线动图（由 core/ 的真实函数驱动，可暂停）
-├── modules/              六个教学模块（registry.ts 是注册表）
+├── modules/              九个教学模块（registry.ts 是注册表）
 ├── i18n/                 极简双语：Context + t()，common.ts 放跨模块文案
 ├── styles/global.css     全部样式，浅色主题 + 响应式
 └── App.tsx               侧边栏 + 内容区，无路由库
@@ -256,7 +259,7 @@ scripts/
 ├── verify-pages.mjs      线上部署验收：真实 Chrome 加载、双语切换、控制台错误、截图
 ├── verify-modules.mjs    线上模块验收：逐个切模块 + 点「导出图片」校验导出成功
 └── make-gif.py           把帧拼成 docs/demo.gif（需 Pillow）
-docs/                     六篇配套长文（中文） + en/（英文版）
+docs/                     九篇配套长文（中文） + en/（英文版）
 .github/workflows/        GitHub Pages 自动部署
 ```
 
@@ -267,7 +270,7 @@ docs/                     六篇配套长文（中文） + en/（英文版）
 ## 测试
 
 ```bash
-npm test              # 117 个单测，全部纯函数，不碰网络
+npm test              # 215 个单测，全部纯函数，不碰网络
 
 # 端到端（会真的下 129 MB 权重，默认跳过）
 REAL_MODEL_TEST=1 npm test
@@ -319,7 +322,7 @@ REAL_MODEL_TEST=1 REAL_MODEL_ID=onnx-community/Qwen3-0.6B-ONNX npm test
 
 欢迎提 Issue 和 PR。几个容易上手的方向：
 
-- 补第七个模块（比如 MoE、RoPE 外推、量化）——在 `src/modules/` 下新建组件 + 在 `registry.ts` 加一项即可
+- 补模块（比如 MLA、推测解码、FlashAttention 的 IO 账）——在 `src/core/` 写纯计算 + `src/modules/` 下新建组件 + 在 `registry.ts` 加一项即可，`core/` 的纯函数可以直接写单测
 - 补充测试，尤其是 `core/` 里还没覆盖的边界
 - 校对英文文案（`docs/en/` 与各模块的 `en` 字典）
 - 报告真实模型链路在你网络环境下的表现
@@ -338,7 +341,7 @@ REAL_MODEL_TEST=1 REAL_MODEL_ID=onnx-community/Qwen3-0.6B-ONNX npm test
   author = {1690940255ran-dot},
   year   = {2026},
   url    = {https://github.com/1690940255ran-dot/llm-inside-lab},
-  note   = {纯前端、中英双语的大语言模型内部机制交互可视化；六个模块 + 十二篇配套长文}
+  note   = {纯前端、中英双语的大语言模型内部机制交互可视化；九个模块 + 十八篇配套长文}
 }
 ```
 
@@ -368,7 +371,8 @@ REAL_MODEL_TEST=1 REAL_MODEL_ID=onnx-community/Qwen3-0.6B-ONNX npm test
 - [x] v0.7 docs/ 六篇长文的英文版（`docs/en/`，与中文版章节一一对应）
 - [x] v0.8 采样模块接真实模型——真实 next-token 分布已落地：温度 / top-k / top-p
       直接作用在真实 logits 上，顺带读出 KV Cache 的实测张量形状
-- [ ] v0.9 MoE / 量化 / 长上下文外推等新模块
+- [x] v0.9 三个新模块：MoE 稀疏专家 / 量化 / 长上下文外推（`core/moe.ts` `core/quant.ts` `core/context.ts`）
+      + 三篇配套长文（中/英），单测 117 → 215
 - [ ] v1.0 自定义语料上传 + 迷你模型训练可视化
 
 ## License

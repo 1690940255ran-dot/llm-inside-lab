@@ -9,7 +9,7 @@ export type Lang = 'zh' | 'en'
 export const COMMON = {
   zh: {
     brandTitle: 'LLM 内部机制可视化实验室',
-    brandSub: 'v0.7 · 纯前端 · 中英双语',
+    brandSub: 'v0.9 · 纯前端 · 中英双语',
     navHome: '首页',
     navHomeSub: '这个项目在做什么',
 
@@ -28,7 +28,7 @@ export const COMMON = {
       '：BPE 合并表真的从语料里统计出来，注意力的 Q/K/V 投影、缩放、因果掩码、softmax 走的是完整正确的计算路径，不同头呈现的模式也是文献里反复观察到的那几种。另外，采样模块里可以选择性地加载一个真实小模型（129 MB 起），把温度 / top-k / top-p 直接作用在真实权重算出的分布上，顺带看到 KV Cache 的实测张量形状。',
     homeOrderTitle: '建议的浏览顺序',
     homeOrder:
-      '分词 → 嵌入与位置编码 → 多头注意力 → 采样生成 → KV Cache → 层间数据流。前三步是理解后面一切的地基，尤其是注意力那一步，值得你把每个头都点开看一遍；后三步是「训练好的模型怎么被用来生成」，也是工程面试最爱问的部分。',
+      '分词 → 嵌入与位置编码 → 多头注意力 → 采样生成 → KV Cache → 层间数据流 → MoE → 量化 → 长上下文外推。前六步是「模型内部长什么样」，建议按顺序走一遍，尤其是注意力那一步，值得你把每个头都点开看。后三步是工程与部署侧最常被问到的三个话题：稀疏专家怎么省算力、量化怎么省显存、位置编码怎么撑住长上下文。',
 
     principleTitle: '这一步在算什么？',
     formula: '数学形式',
@@ -71,7 +71,7 @@ export const COMMON = {
   },
   en: {
     brandTitle: 'Inside the LLM',
-    brandSub: 'v0.7 · frontend only · bilingual',
+    brandSub: 'v0.9 · frontend only · bilingual',
     navHome: 'Home',
     navHomeSub: 'What this project is',
 
@@ -91,7 +91,7 @@ export const COMMON = {
       ': BPE merges are counted from a real corpus, attention runs the full Q/K/V projection, scaling, causal masking and softmax, and the head patterns are the ones repeatedly reported in the literature. On top of that, the sampling module can optionally load a real small model (129 MB and up), so temperature / top-k / top-p act on a distribution produced by real weights — and you get the measured KV-cache tensor shapes for free.',
     homeOrderTitle: 'Suggested order',
     homeOrder:
-      'Tokenizer → Embeddings & Positional Encoding → Multi-Head Attention → Sampling → KV Cache → Block data flow. The first three are the foundation; the last three cover how a trained model is actually used to generate, which is what engineering interviews love to ask.',
+      'Tokenizer → Embeddings & Positional Encoding → Multi-Head Attention → Sampling → KV Cache → Block data flow → MoE → Quantization → Context extension. The first six are "what the model looks like inside" and are best taken in order — especially attention, where every head is worth opening. The last three are the three topics that come up most in engineering and deployment: how sparse experts save compute, how quantization saves memory, and how positional encoding holds up over long context.',
 
     principleTitle: 'What is being computed here?',
     formula: 'The math',
