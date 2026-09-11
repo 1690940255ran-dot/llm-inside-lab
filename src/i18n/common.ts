@@ -9,7 +9,7 @@ export type Lang = 'zh' | 'en'
 export const COMMON = {
   zh: {
     brandTitle: 'LLM 内部机制可视化实验室',
-    brandSub: 'v1.0 · 纯前端 · 中英双语',
+    brandSub: 'v1.0.1 · 纯前端 · 中英双语',
     navHome: '首页',
     navHomeSub: '这个项目在做什么',
 
@@ -71,7 +71,7 @@ export const COMMON = {
   },
   en: {
     brandTitle: 'Inside the LLM',
-    brandSub: 'v1.0 · frontend only · bilingual',
+    brandSub: 'v1.0.1 · frontend only · bilingual',
     navHome: 'Home',
     navHomeSub: 'What this project is',
 

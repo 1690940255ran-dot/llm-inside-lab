@@ -9,7 +9,7 @@
 ![Node](https://img.shields.io/badge/node-%E2%89%A518-339933)
 ![React](https://img.shields.io/badge/react-18-61dafb)
 ![TS](https://img.shields.io/badge/typescript-5-3178c6)
-![tests](https://img.shields.io/badge/tests-242%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-243%20passing-brightgreen)
 ![i18n](https://img.shields.io/badge/i18n-%E4%B8%AD%2FEN-blue)
 ![docs](https://img.shields.io/badge/docs-%E4%B8%AD%2FEN%20%C3%9710-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -56,7 +56,7 @@
 | **可选跑真实模型** | 浏览器内（WebGPU / WASM）真跑 SmolLM2 / LFM2 / Qwen3，把温度 / top-k / top-p 直接作用在**真实 logits** 上，顺带读出 KV Cache 的实测张量形状 |
 | **不骗人** | 哪里是模拟、哪里是真算，首页和每个模块都写清楚；拿不到的东西（真实注意力热力图）直接贴出实测证据说明为什么拿不到；训不出来的时候也如实说明（实测 8 个种子有 2 个会失败） |
 | **零 UI / 图表库** | 热力图用 `<table>`、折线图用 SVG、导出 PNG 自己实现（`core/exportImage.ts`），主包 143 kB gzip |
-| **242 个单测** | `core/` 全纯函数，可脱离浏览器断言；踩过的每个坑都有回归测试 |
+| **243 个单测** | `core/` 全纯函数，可脱离浏览器断言；踩过的每个坑都有回归测试 |
 | **中英双语** | 界面双语，十篇配套长文也有完整英文版，章节一一对应 |
 
 ---
@@ -100,7 +100,7 @@ npm run dev          # http://127.0.0.1:5173
 
 ```bash
 npm run build        # 产物在 dist/，可直接静态托管
-npm test             # 242 个单测，全部纯函数，不碰网络
+npm test             # 243 个单测，全部纯函数，不碰网络
 npm run test:watch   # 开发时用
 npm run probe:model  # 探测 ONNX 输出签名（就是它证明了拿不到真实注意力）
 ```
@@ -150,7 +150,7 @@ npm run probe:model  # 探测 ONNX 输出签名（就是它证明了拿不到真
 
 要点：
 
-- **动态 import**，不加载就不会下载这部分代码（主包 133 kB gzip，transformers 单独分片）
+- **动态 import**，不加载就不会下载这部分代码（主包 143 kB gzip，transformers 单独分片）
 - **全程本地推理**，文本不会发到任何服务器
 - **镜像可配**：默认 `https://hf-mirror.com`，国外网络可改回 `https://huggingface.co`
 - **静态托管自动锁单线程**：GitHub Pages 不发 COOP/COEP 响应头 → 拿不到 `SharedArrayBuffer`
@@ -288,7 +288,7 @@ docs/                     十篇配套长文（中文） + en/（英文版）
 ## 测试
 
 ```bash
-npm test              # 242 个单测，全部纯函数，不碰网络
+npm test              # 243 个单测，全部纯函数，不碰网络
 
 # 端到端（会真的下 129 MB 权重，默认跳过）
 REAL_MODEL_TEST=1 npm test
@@ -400,6 +400,9 @@ REAL_MODEL_TEST=1 REAL_MODEL_ID=onnx-community/Qwen3-0.6B-ONNX npm test
 - [x] v1.0 自定义语料上传 + 迷你模型训练可视化（`core/minigpt.ts` `workers/trainWorker.ts`）
       —— 浏览器里真的训练：手写前向 / 反向 / AdamW，1.86 万参数从验证 loss 2.58 到 0.014
       + 第十篇配套长文（中/英），单测 215 → 242
+- [x] v1.0.1 上线后交互复审修 bug：`core/` 层不再产出界面文案（`paramBreakdown()` 从中文
+      显示名改成 `ParamGroupKey`），修掉切英文界面时「这笔账有多大」露出中文的问题；
+      `verify-modules.mjs` 新增「英文模式漏翻扫描」永久 check，单测 242 → 243
 
 ## License
 

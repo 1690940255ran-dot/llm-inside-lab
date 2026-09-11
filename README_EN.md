@@ -9,7 +9,7 @@ Frontend only · no paid APIs · bilingual (中文 / EN) · responsive · ten pl
 ![Node](https://img.shields.io/badge/node-%E2%89%A518-339933)
 ![React](https://img.shields.io/badge/react-18-61dafb)
 ![TS](https://img.shields.io/badge/typescript-5-3178c6)
-![tests](https://img.shields.io/badge/tests-242%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-243%20passing-brightgreen)
 ![i18n](https://img.shields.io/badge/i18n-%E4%B8%AD%2FEN-blue)
 ![docs](https://img.shields.io/badge/docs-ZH%2FEN%20%C3%9710-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -59,7 +59,7 @@ the input and watch everything recompute live**:
 | **Optional real weights** | Run SmolLM2 / LFM2 / Qwen3 in your browser (WebGPU, WASM fallback) so temperature / top-k / top-p act on **real logits**, and read the measured KV-cache tensor shapes |
 | **Honest about what is simulated** | The homepage and every module state which parts are simulated and which are real. Where something is genuinely impossible in a browser (real attention maps), the site shows the measurement that proves it — and when training fails, it says so (measured: 2 of 8 seeds fail) |
 | **No UI or charting library** | Heatmaps are `<table>`, line charts are SVG, PNG export is hand-rolled (`core/exportImage.ts`). Main bundle: 143 kB gzip |
-| **242 unit tests** | `core/` is pure functions, so it can be asserted without a browser. Every bug we hit has a regression test |
+| **243 unit tests** | `core/` is pure functions, so it can be asserted without a browser. Every bug we hit has a regression test |
 | **Bilingual** | UI in Chinese and English; the ten companion essays have full English versions with matching section numbers |
 
 ---
@@ -104,7 +104,7 @@ Other commands:
 
 ```bash
 npm run build        # output in dist/, ready for static hosting
-npm test             # 242 unit tests, pure functions only, no network
+npm test             # 243 unit tests, pure functions only, no network
 npm run test:watch   # while developing
 npm run probe:model  # dump ONNX output signatures (this is what proves real attention is unavailable)
 ```
@@ -155,7 +155,7 @@ historical control.
 
 Notes:
 
-- **Dynamic import** — nothing downloads until you ask (main bundle 101 kB gzip, transformers is a separate chunk)
+- **Dynamic import** — nothing downloads until you ask (main bundle 143 kB gzip, transformers is a separate chunk)
 - **Fully local inference** — your text never leaves the machine
 - **Configurable mirror** — defaults to `https://hf-mirror.com`; use `https://huggingface.co` elsewhere
 - **Static hosting locks to single-thread** — GitHub Pages does not send COOP/COEP headers, so
@@ -266,7 +266,7 @@ docs/                     ten essays (中文) + en/ (English)
 ## Tests
 
 ```bash
-npm test              # 242 unit tests, pure functions only, no network
+npm test              # 243 unit tests, pure functions only, no network
 
 # end-to-end (downloads 129 MB of weights, skipped by default)
 REAL_MODEL_TEST=1 npm test
@@ -374,6 +374,10 @@ Each essay ends with the classic papers for its topic — see [`docs/en/`](./doc
 - [x] v1.0 Custom corpus upload + mini training-run visualization (`core/minigpt.ts`, `workers/trainWorker.ts`)
       — genuinely training in the browser: hand-written forward / backward / AdamW, 18.6k parameters from
       validation loss 2.58 to 0.014 — plus the tenth companion essay in both languages; unit tests went 215 → 242
+- [x] v1.0.1 Post-release interaction review: `core/` no longer emits UI copy
+      (`paramBreakdown()` now returns `ParamGroupKey` instead of Chinese display names), fixing Chinese
+      text leaking into the English UI in the parameter-budget chart; `verify-modules.mjs` gained a permanent
+      "English mode untranslated-text scan"; unit tests went 242 → 243
 
 ## License
 
