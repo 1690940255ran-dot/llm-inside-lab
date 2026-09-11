@@ -19,6 +19,7 @@ import {
   DEFAULT_TRAIN,
   PRESET_CORPORA,
   type ModelConfig,
+  type ParamGroupKey,
   type TrainConfig,
 } from '../../core/minigpt'
 import type { MainToWorker, WorkerToMain } from '../../core/trainProtocol'
@@ -114,6 +115,13 @@ const zh = {
 
   paramTitle: '这笔账有多大',
   paramHint: '参数量明细 + 和真模型对比',
+  paramGroups: {
+    tokEmb: '词嵌入（= 输出投影，共享）',
+    posEmb: '位置嵌入',
+    attn: '注意力（QKVO）',
+    ffn: '前馈（W1/W2）',
+    ln: 'LayerNorm',
+  } satisfies Record<ParamGroupKey, string>,
   paramNote:
     '词嵌入和输出投影共享同一份权重，所以它只出现在明细里一次 —— 这是 GPT-2 以来省参数的标准做法。下面把我们的一万八千多参数和真模型放在同一个尺子上：GPT-2 124M 是它的 6 670 倍，GPT-3 175B 是它的 940 万倍。而这还只是**参数量**；预训练总算力约等于 `6 × 参数量 × 训练 token 数`，真模型的 token 数本身就是千亿量级，所以算力差距比参数差距还要再大好几个数量级。',
 
@@ -214,6 +222,13 @@ const en: typeof zh = {
 
   paramTitle: 'How big is this bill',
   paramHint: 'parameter breakdown + comparison with real models',
+  paramGroups: {
+    tokEmb: 'Token embedding (= output proj, tied)',
+    posEmb: 'Positional embedding',
+    attn: 'Attention (QKVO)',
+    ffn: 'Feed-forward (W1/W2)',
+    ln: 'LayerNorm',
+  } satisfies Record<ParamGroupKey, string>,
   paramNote:
     'The token embedding and the output projection share one weight matrix, so it appears only once in the breakdown — the standard way to save parameters since GPT-2. Below, our ~18.6k parameters sit on the same ruler as real models: GPT-2 124M is 6,670× this mini model, and GPT-3 175B is 9.4 million×. And that is only **parameter count**; pretraining compute is roughly `6 × parameters × training tokens`, and real models see hundreds of billions of tokens — so the compute gap is orders of magnitude wider still.',
 
@@ -246,7 +261,7 @@ interface ReadyInfo {
   corpusChars: number
   paramCount: number
   flopsPerToken: number
-  paramBreakdown: { name: string; size: number }[]
+  paramBreakdown: { key: ParamGroupKey; size: number }[]
   initialLoss: number
 }
 
@@ -692,9 +707,9 @@ export function TrainModule() {
           <>
             <div className="bars">
               {ready.paramBreakdown.map((g) => (
-                <div className="bar-row" key={g.name}>
-                  <div className="label" title={g.name}>
-                    {g.name}
+                <div className="bar-row" key={g.key}>
+                  <div className="label" title={d.paramGroups[g.key] ?? g.key}>
+                    {d.paramGroups[g.key] ?? g.key}
                   </div>
                   <div className="bar-track">
                     <div className="bar-fill" style={{ width: `${(g.size / ready.paramBreakdown[0].size) * 100}%`, opacity: 0.35 + 0.65 * (g.size / ready.paramBreakdown[0].size) }} />

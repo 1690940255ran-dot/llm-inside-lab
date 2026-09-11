@@ -5,7 +5,7 @@
  * 放在主线程上会把页面彻底冻住（连「停止」按钮都点不动）。
  * 这里把两个方向的消息类型集中定义，主线程和 Worker 共用，改一处不会漏另一边。
  */
-import type { ModelConfig, TrainConfig } from './minigpt'
+import type { ModelConfig, ParamGroupKey, TrainConfig } from './minigpt'
 
 /** 主线程 → Worker */
 export type MainToWorker =
@@ -35,7 +35,8 @@ export type WorkerToMain =
       corpusChars: number
       paramCount: number
       flopsPerToken: number
-      paramBreakdown: { name: string; size: number }[]
+      /** 键 → 文案的映射由模块 i18n 字典负责，core 层只产出键 */
+      paramBreakdown: { key: ParamGroupKey; size: number }[]
       /** 初始验证 loss（用于画曲线起点） */
       initialLoss: number
       textPerStepMs: number

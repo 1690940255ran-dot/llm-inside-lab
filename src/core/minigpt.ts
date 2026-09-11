@@ -56,6 +56,14 @@ export interface TrainConfig {
 }
 
 /**
+ * paramBreakdown() 返回的分组键。
+ *
+ * 键 → 显示文案的映射属于界面，由消费模块的 i18n 字典负责；
+ * core 层只产出键，不产出文字 —— 否则切到英文界面时这一块会露出中文。
+ */
+export type ParamGroupKey = 'tokEmb' | 'posEmb' | 'attn' | 'ffn' | 'ln'
+
+/**
  * 默认模型：2 层 d=32、约 1.86 万参数（`18176 + 32 × 词表大小`，随语料浮动）。
  *
  * 尺寸是实测出来的：单步纯训练约 14 ms，而站点里每 20 步还要在 12 个验证 batch 上
@@ -410,18 +418,24 @@ export class MiniGPT {
     return this.tensors.reduce((a, t) => a + t.size, 0)
   }
 
-  /** 每层参数量明细，用来画「参数都花在哪了」 */
-  paramBreakdown(): { name: string; size: number }[] {
-    const groups: { name: string; size: number }[] = []
-    const push = (name: string, test: (n: string) => boolean) => {
+  /**
+   * 每层参数量明细，用来画「参数都花在哪了」。
+   *
+   * 返回的是**分组键**而不是显示文案：core 层不应该产出界面文字，
+   * 否则切到英文界面时这一块会露出中文（这个 bug 真的发生过）。
+   * 键 → 文案的映射由模块的 i18n 字典负责。
+   */
+  paramBreakdown(): { key: ParamGroupKey; size: number }[] {
+    const groups: { key: ParamGroupKey; size: number }[] = []
+    const push = (key: ParamGroupKey, test: (n: string) => boolean) => {
       const size = this.tensors.filter((t) => test(t.name)).reduce((a, t) => a + t.size, 0)
-      if (size > 0) groups.push({ name, size })
+      if (size > 0) groups.push({ key, size })
     }
-    push('词嵌入（= 输出投影，共享）', (n) => n === 'tokEmb')
-    push('位置嵌入', (n) => n === 'posEmb')
-    push('注意力（QKVO）', (n) => /\.(Wq|Wk|Wv|Wo|bq|bk|bv|bo)$/.test(n))
-    push('前馈（W1/W2）', (n) => /\.(W1|W2|b1|b2)$/.test(n))
-    push('LayerNorm', (n) => /ln/.test(n))
+    push('tokEmb', (n) => n === 'tokEmb')
+    push('posEmb', (n) => n === 'posEmb')
+    push('attn', (n) => /\.(Wq|Wk|Wv|Wo|bq|bk|bv|bo)$/.test(n))
+    push('ffn', (n) => /\.(W1|W2|b1|b2)$/.test(n))
+    push('ln', (n) => /ln/.test(n))
     return groups.sort((a, b) => b.size - a.size)
   }
 

@@ -315,6 +315,50 @@ if (trainIdx >= 0) {
   if (!tr.attnCompare) log('!! 注意力训练前后对比（.two-col）没出现')
 }
 
+/* ---- ⑩ 英文模式漏翻扫描 ----
+ * 起因：core/minigpt.ts 的 paramBreakdown() 曾经直接返回中文显示名，
+ * 于是切到英文界面时「这笔账有多大」那张条形图会露出中文。
+ * 这类 bug 只有真浏览器能抓到 —— 单元测试看到的是数据，不是 DOM 文本。
+ * 排除掉本来就该是中文的地方：语料输入框、模型采样输出、热力图里的字符行标、
+ * 语言切换按钮本身。
+ */
+if (navIndex('迷你') >= 0) {
+  await clickNav(navIndex('迷你'))
+  await sleep(2500)
+
+  const en = await evalJS(`(async () => {
+    const out = {}
+    const seg = [...document.querySelectorAll('.segmented button')].find(b => b.textContent.trim() === 'English')
+    out.foundSwitch = !!seg
+    if (seg) { seg.click(); await new Promise(r => setTimeout(r, 2600)) }
+    out.title = document.querySelector('.module-head h2') ? document.querySelector('.module-head h2').textContent : null
+
+    const SKIP = ['textarea', '.sample-list', '.heat-wrap', '.segmented', '.nav']
+    const bad = []
+    document.querySelectorAll('body *').forEach((el) => {
+      if (SKIP.some(s => el.closest(s))) return
+      // 只取元素自己直接持有的文本节点，避免把容器的拼接文本算进来
+      const own = [...el.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('')
+      if (!/[\\u4e00-\\u9fa5]{2,}/.test(own)) return
+      const cls = String(el.className).split(' ').filter(Boolean).join('.')
+      bad.push(el.tagName.toLowerCase() + (cls ? '.' + cls : '') + '=' + own.trim().slice(0, 40))
+    })
+    out.untranslated = bad.slice(0, 8)
+
+    const back = [...document.querySelectorAll('.segmented button')].find(b => b.textContent.trim() === '中文')
+    if (back) { back.click(); await new Promise(r => setTimeout(r, 2200)) }
+    out.titleZh = document.querySelector('.module-head h2') ? document.querySelector('.module-head h2').textContent : null
+    return out
+  })()`, true)
+
+  checks.push({ module: 'Train-i18n', ...en })
+  log('Train i18n check:', JSON.stringify(en))
+  if (!en.foundSwitch) log('!! 没找到 English 语言切换按钮')
+  if (!en.title || !/Train a mini GPT/i.test(en.title)) log('!! 英文模式下模块标题没翻译: ' + en.title)
+  if (en.untranslated.length) log('!! 英文模式下有未翻译的界面文案: ' + en.untranslated.join(' | '))
+  if (!en.titleZh || en.titleZh === en.title) log('!! 切回中文后标题没恢复: ' + en.titleZh)
+}
+
 fs.writeFileSync(path.join(OUT_DIR, 'modules.json'), JSON.stringify({ url: URL_TARGET, navLabels, results, checks, errs }, null, 2))
 log('=== ERRORS (' + errs.length + ') ===')
 errs.slice(0, 10).forEach((e) => log('  ' + e))

@@ -29,6 +29,7 @@ import {
   sampleBatch,
   vocabChar,
   type ModelConfig,
+  type ParamGroupKey,
   type TrainConfig,
 } from '../src/core/minigpt'
 import { mulberry32 } from '../src/core/random'
@@ -293,6 +294,23 @@ describe('模型自检', () => {
     const m = new MiniGPT({ vocabSize: 20, model: DEFAULT_MODEL, batchSize: 4, seed: 1 })
     const sum = m.paramBreakdown().reduce((a, g) => a + g.size, 0)
     expect(sum).toBe(m.paramCount())
+  })
+
+  /**
+   * 回归测试：曾经这里返回的是中文显示名，切到英文界面时「参数都花在哪了」
+   * 那张条形图会直接露出中文。core 层只允许给键，文案由模块的 i18n 字典负责。
+   */
+  it('参数明细只返回分组键，绝不返回界面文案', () => {
+    const m = new MiniGPT({ vocabSize: 20, model: DEFAULT_MODEL, batchSize: 4, seed: 1 })
+    const groups = m.paramBreakdown()
+    const allowed: ParamGroupKey[] = ['tokEmb', 'posEmb', 'attn', 'ffn', 'ln']
+    for (const g of groups) {
+      expect(allowed).toContain(g.key)
+      // 键必须是纯 ASCII 标识符，不能混进任何 CJK 字符
+      expect(/^[a-zA-Z]+$/.test(g.key)).toBe(true)
+    }
+    // 默认配置下五组都应该非空（词嵌入/位置嵌入/注意力/前馈/LayerNorm）
+    expect(groups.map((g) => g.key).sort()).toEqual([...allowed].sort())
   })
 
   it('每 token FLOPs 随层数线性增长', () => {
